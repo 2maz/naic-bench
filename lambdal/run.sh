@@ -1,74 +1,55 @@
 #!/usr/bin/bash
 #SBATCH --job-name=inference-benchmark
 #SBATCH --time=2-00:00:00
-#SBATCH --account=roehr
+#SBATCH --account=<slurm-user>
 #SBATCH --output=logs/inference-benchmark-%N-%j.log
 #SBATCH --nodes=1
 #SBATCH --mincpus=4
 
-#ASBATCH --gres=gpu:1
+#-SBATCH --gres=gpu:1
 
-module load docker 
+function usage() {
+    echo "$0 <options>"
+    echo "options:"
+    echo "-b    benchmark name"
+    echo "-d    data directory"
+    echo "-h    this help"
+    echo "-i    iteractive docker session"
+    echo "-w    base/working directory"
+}
 
-# The benchmark log files will be saved to deeplearning-benchmark/pytorch/results/ex3_1xA100_80GB_$(hostname)
-source ~/slurm-runner/venv-$(uname -i)/bin/activate
+export BASE_DIR=$PWD
+export DATA_DIR=$BASE_DIR/data
 
-export NAME_NGC=pytorch:24.10-py3
-export NAME_TYPE=ex3
-
-export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '[]()' '-'`
-export GPU_SIZE=`echo $(slurm-monitor system-info -q gpus.memory_total)/1024^3 | bc`
-export NUM_GPU=1
-export GPU_FRAMEWORK=`slurm-monitor system-info -q gpus.framework`
-
-
-export NAIC_PROJECT=/global/D1/projects/NAIC/
-export LAMBDAL_DATA_DIR=/global/D1/projects/NAIC/data/lambdal
-export LAMBDAL_BASE_DIR=/global/D1/projects/NAIC/software/lambdal
-
-export BENCHMARKS_D_DIR=$LAMBDAL_BASE_DIR/benchmarks.d
-
-export DL_BENCHMARK_DIR=$LAMBDAL_BASE_DIR/deeplearning-benchmark/pytorch
-export DL_EXAMPLES_DIR=$LAMBDAL_BASE_DIR/DeepLearningExamples
-
-SCRIPT_DIR=$(realpath -L $(dirname $0))
-export RESULTS_DIR=$SCRIPT_DIR/results/
-
-### Run benchmark
-if [ ! -d $RESULTS_DIR ]; then
-    mkdir -p $RESULTS_DIR
-fi
-
-
-DOCKER_VOLUMES="-v ${DL_EXAMPLES_DIR}/PyTorch:/workspace/benchmark "
-DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${LAMBDAL_BASE_DIR}/benchmarks.d:/workspace/benchmarks.d"
-DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${LAMBDAL_DATA_DIR}:/data"
-DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${DL_BENCHMARK_DIR}/scripts:/scripts"
-DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${RESULTS_DIR}:/results"
-
-DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${NAIC_PROJECT}:/NAIC"
-
-DOCKER_ENVIRONMENT="-e NUM_GPU=$NUM_GPU"
-DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e GPU_SIZE=$GPU_SIZE"
-DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_GPU=$NAME_GPU"
-DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_TYPE=$NAME_TYPE"
-DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NODE=$(hostname)"
-
-while getopts "ib:" option; do
+while getopts "hib:d:w:" option; do
     case $option in
+        b)
+            BENCHMARK_NAME=$OPTARG
+            export BENCHMARK_NAME
+            ;;
+        d)
+            DATA_DIR=$(realpath -L $OPTARG)
+            export DATA_DIR
+            ;;
         i)
             DOCKER_INTERACTIVE="-it" 
             export DOCKER_INTERACTIVE
             ;;
-        b)
-            BENCHMARK_NAME=$OPTARG
-            export BENCHMARK_NAME
+        h)
+            usage
+            exit 0
+            ;;
+        w)
+            BASE_DIR=$(realpath -L $OPTARG)
+            export BASE_DIR
             ;;
         *)
             ;;
     esac
 done
 
+SCRIPT_DIR=$(realpath -L $(dirname $0))
+export BENCHMARKS_D_DIR=$SCRIPT_DIR/benchmarks.d
 if [ -z "$BENCHMARK_NAME" ]; then
     echo "Please specify a benchmark to run using -b option. Available are:"
     ls $BENCHMARKS_D_DIR | sed 's/\.sh//g'
@@ -89,6 +70,50 @@ function user_command() {
         echo "bash -c $CMD"
     fi
 }
+
+## BEGIN MAIN
+module load docker 
+
+if ! command -v slurm-monitor; then
+    echo "'slurm-monitor' is not installed. Please create a python virtual env and run"
+    echo "   pip install git+https://github.com/2maz/slurm-monitor"
+    exit 10
+fi
+
+
+# The benchmark log files will be saved to deeplearning-benchmark/pytorch/results/$NAME_TYPE_1xA100_80GB_$(hostname)
+export NAME_TYPE=cluster
+export NAME_NGC=pytorch:24.10-py3
+# Test for this many GPUs
+export NUM_GPU=1
+
+export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '[]()' '-'`
+export GPU_SIZE=`echo $(slurm-monitor system-info -q gpus.memory_total)/1024^3 | bc`
+export GPU_FRAMEWORK=`slurm-monitor system-info -q gpus.framework`
+
+export DL_BENCHMARK_DIR=$BASE_DIR/naic-deeplearning-benchmark/pytorch
+export DL_EXAMPLES_DIR=$BASE_DIR/naic-DeepLearningExamples
+
+export RESULTS_DIR=$SCRIPT_DIR/results/
+
+### Run benchmark
+if [ ! -d $RESULTS_DIR ]; then
+    mkdir -p $RESULTS_DIR
+fi
+
+
+DOCKER_VOLUMES="-v ${DL_EXAMPLES_DIR}/PyTorch:/workspace/benchmark "
+DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${BASE_DIR}/benchmarks.d:/workspace/benchmarks.d"
+DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${DATA_DIR}:/data"
+DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${DL_BENCHMARK_DIR}/scripts:/scripts"
+DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${RESULTS_DIR}:/results"
+
+DOCKER_ENVIRONMENT="-e NUM_GPU=$NUM_GPU"
+DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e GPU_SIZE=$GPU_SIZE"
+DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_GPU=$NAME_GPU"
+DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_TYPE=$NAME_TYPE"
+DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NODE=$(hostname)"
+
 
 echo "DOCKER_ENVIRONMENT: $DOCKER_ENVIRONMENT"
 
@@ -125,7 +150,6 @@ elif [ "$GPU_FRAMEWORK" == "cuda" ]; then
         --rm --shm-size=1024g \
         nvcr.io/nvidia/${NAME_NGC} \
         $(user_command)
-
 elif [ "$GPU_FRAMEWORK" == "habana" ]; then
     HABANA_IMAGE=vault.habana.ai/gaudi-docker/1.17.1/ubuntu22.04/habanalabs/pytorch-installer-2.3.1
 
@@ -149,7 +173,6 @@ elif [ "$GPU_FRAMEWORK" == "habana" ]; then
         $HABANA_IMAGE \
         $(user_command -d hpu -i 100 -n 100)
 elif [ "$GPU_FRAMEWORK" == "xpu" ]; then
-    echo "python /NAIC/software/pytorch-benchmark/inference-benchmark.py --label $NAME_GPU -o /results/inference-benchmark-$NAME_GPU.json -d xpu -i 1 -n 1"
     docker run \
         $DOCKER_INTERACTIVE \
         $DOCKER_VOLUMES \
