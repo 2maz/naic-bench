@@ -6,6 +6,15 @@ NODE=${NODE:-$HOSTNAME}
 
 export NAME_TYPE=${NAME_TYPE:-"test"}
 
+if ! command -v bc; then
+    apt update && apt install -y bc
+fi
+
+if ! command -v slurm-monitor; then
+    echo "Installing slurm-monitor"
+    pip install git+https://github.com/2maz/slurm-monitor#egg=slurm-monitor[restapi]
+fi
+
 export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '/[]()' '-' | sed 's/-$//g' | sed 's/--/-/g'`
 export GPU_SIZE=`echo $(slurm-monitor system-info -q gpus.memory_total)/1024^3 | bc`
 export GPU_COUNT=`echo $(slurm-monitor system-info -q gpus.count)`
@@ -14,7 +23,7 @@ export GPU_FRAMEWORK=`slurm-monitor system-info -q gpus.framework`
 export NAME_DATASET=all
 export NAME_TASKS=all
 export TIMEOUT_IN_S=6000
-export WORKSPACE_DIR=/naic-workspace
+export WORKSPACE_DIR=$PWD
 export GPU_DEVICE_TYPE=cuda
 
 export PREPARE_BENCHMARK_ONLY=0
