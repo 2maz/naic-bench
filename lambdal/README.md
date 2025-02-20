@@ -10,7 +10,7 @@ To setup the benchmark and download the required datasets:
 
 ```
     git clone https://2maz/naic-bench.git
-    cd naic-bench
+    cd naic-bench/lambdal
 
     ./prepare.sh
 ```
