@@ -33,8 +33,8 @@ When running the container interactively (-i) then:
     cp -R /scripts/* .
 
     # list available tasks
-    /workspace/benchmarks.d/lamdal.sh -h
+    /workspace/benchmarks.d/lambdal.sh -h
 
     # run task
-    /workspace/benchmarks.d/lamdal.sh -d cuda -n 1 -t PyTorch_gnmt_FP16
+    /workspace/benchmarks.d/lambdal.sh -d cuda -n 1 -t PyTorch_gnmt_FP16
 ```
