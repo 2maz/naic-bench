@@ -6,13 +6,23 @@ NODE=${NODE:-$HOSTNAME}
 
 export NAME_TYPE=${NAME_TYPE:-"test"}
 
-if ! command -v bc; then
-    apt update && apt install -y bc
+APT_INSTALL_PKGS=""
+if ! command -v bc > /dev/null; then
+    APT_INSTALL_PKGS="bc"
 fi
 
-if ! command -v slurm-monitor; then
+if ! python -m ensurepip > /dev/null; then
+    PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    APT_INSTALL_PKGS="${APT_INSTALL} python$PYTHON_VERSION-venv"
+fi
+
+if [ "$APT_INSTALL_PKGS" != "" ]; then
+    apt update && apt install -y $APT_INSTALL_PKGS
+fi
+
+if ! command -v slurm-monitor > /dev/null; then
     echo "Installing slurm-monitor"
-    pip install slurm-monitor[restapi] @ git+https://github.com/2maz/slurm-monitor
+    pip install "slurm-monitor[restapi] @ git+https://github.com/2maz/slurm-monitor"
 fi
 
 export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '/[]()' '-' | sed 's/-$//g' | sed 's/--/-/g'`
@@ -65,8 +75,15 @@ while getopts "hd:t:prw:n:" option; do
 done
 
 if [ ! -e $WORKSPACE_DIR/tasks.sh ]; then
-    echo "Missing declaration of tasks in $WORKSPACE_DIR"
-    exit 10
+    if [ -e /scripts/tasks.sh ]; then
+        echo "Preparing current directory by copying scripts from /scripts/"
+        cp -R /scripts/* .
+    fi
+
+    if [ ! -e $WORKSPACE_DIR/tasks.sh ]; then
+    	echo "Missing declaration of tasks in $WORKSPACE_DIR"
+    	exit 10
+    fi
 fi
 
 cd $WORKSPACE_DIR
@@ -126,13 +143,8 @@ case $GPU_DEVICE_TYPE in
 esac
 
 if [ ! -e "run_benchmark.sh" ]; then
-    if [ -e /scripts/run_benchmark.sh ]; then
-        echo "Preparing current directory by copying scripts from /scripts/"
-        cp -R /scripts/* .
-    else
-        echo "Missing startup files (run_benchmark.sh) for benchmark. Did you copy/install/mount the deeplearning-benchmark/Python folder"
-        exit 10
-    fi
+    echo "Missing startup files (run_benchmark.sh) for benchmark. Did you copy/install/mount the deeplearning-benchmark/Python folder"
+    exit 10
 fi
 
 ./run_benchmark.sh ${NAME_TYPE}_${NUM_GPU}x${NAME_GPU}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S

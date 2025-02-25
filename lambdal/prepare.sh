@@ -70,6 +70,10 @@ else
     echo "$DL_BENCHMARK_DIR already exists. Please update manually if necessary (via git pull)"
 fi
 
+DL_BENCHMARKS_D_DIR=benchmarks.d
+if [ ! -d $DL_BENCHMARKS_D_DIR ]; then
+    ln -s $SCRIPT_DIR/$DL_BENCHMARKS_D_DIR $DL_BENCHMARKS_D_DIR
+fi
 
 echo "Trying to connect to nvidia container hub: nvcr.io"
 docker login nvcr.io
