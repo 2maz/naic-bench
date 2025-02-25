@@ -75,9 +75,15 @@ function user_command() {
 module load docker 
 
 if ! command -v slurm-monitor; then
-    echo "'slurm-monitor' is not installed. Please create a python virtual env and run"
-    echo "   pip install git+https://github.com/2maz/slurm-monitor"
-    exit 10
+    if [ -d venv-slurm-monitor ]; then
+       source venv-slurm-monitor/bin/activate
+    fi
+
+    if ! command -v slurm-monitor; then
+        echo "'slurm-monitor' is not installed. Please create a python virtual env and run"
+        echo "   pip install git+https://github.com/2maz/slurm-monitor"
+        exit 10
+    fi
 fi
 
 

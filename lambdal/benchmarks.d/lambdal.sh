@@ -12,7 +12,7 @@ fi
 
 if ! command -v slurm-monitor; then
     echo "Installing slurm-monitor"
-    pip install git+https://github.com/2maz/slurm-monitor#egg=slurm-monitor[restapi]
+    pip install slurm-monitor[restapi] @ git+https://github.com/2maz/slurm-monitor
 fi
 
 export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '/[]()' '-' | sed 's/-$//g' | sed 's/--/-/g'`
@@ -126,7 +126,13 @@ case $GPU_DEVICE_TYPE in
 esac
 
 if [ ! -e "run_benchmark.sh" ]; then
-    echo "Missing startup files for benchmark. Did you copy/install the deeplearning-benchmark"
+    if [ -e /scripts/run_benchmark.sh ]; then
+        echo "Preparing current directory by copying scripts from /scripts/"
+        cp -R /scripts/* .
+    else
+        echo "Missing startup files (run_benchmark.sh) for benchmark. Did you copy/install/mount the deeplearning-benchmark/Python folder"
+        exit 10
+    fi
 fi
 
 ./run_benchmark.sh ${NAME_TYPE}_${NUM_GPU}x${NAME_GPU}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S
