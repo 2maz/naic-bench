@@ -91,7 +91,7 @@ fi
 export NAME_TYPE=cluster
 export NAME_NGC=pytorch:24.10-py3
 # Test for this many GPUs
-export NUM_GPU=1
+export GPU_COUNT=1
 
 export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '[]()' '-'`
 export GPU_SIZE=`echo $(slurm-monitor system-info -q gpus.memory_total)/1024^3 | bc`
@@ -114,7 +114,7 @@ DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${DATA_DIR}:/data"
 DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${DL_BENCHMARK_DIR}/scripts:/scripts"
 DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${RESULTS_DIR}:/results"
 
-DOCKER_ENVIRONMENT="-e NUM_GPU=$NUM_GPU"
+DOCKER_ENVIRONMENT="-e GPU_COUNT=$GPU_COUNT"
 DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e GPU_SIZE=$GPU_SIZE"
 DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_GPU=$NAME_GPU"
 DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_TYPE=$NAME_TYPE"
@@ -159,7 +159,7 @@ elif [ "$GPU_FRAMEWORK" == "cuda" ]; then
 elif [ "$GPU_FRAMEWORK" == "habana" ]; then
     HABANA_IMAGE=vault.habana.ai/gaudi-docker/1.17.1/ubuntu22.04/habanalabs/pytorch-installer-2.3.1
 
-    if [ $NUM_GPU -eq 1 ]; then
+    if [ $GPU_COUNT -eq 1 ]; then
         DOCKER_CUDA_SETUP="-e HABANA_VISIBLE_DEVICES=0"
     else
         DOCKER_CUDA_SETUP="-e HABANA_VISIBLE_DEVICES=all"

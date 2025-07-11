@@ -1,19 +1,19 @@
 #!/usr/bin/bash
 
 # LAMDAL_BENCHMARK
-export NUM_GPU=${NUM_GPU:-1}
+export GPU_COUNT=${GPU_COUNT:-1}
 NODE=${NODE:-$HOSTNAME}
 
 export NAME_TYPE=${NAME_TYPE:-"test"}
 
 APT_INSTALL_PKGS=""
-if ! command -v bc > /dev/null; then
+if [ -z "$(command -v bc)" ]; then
     APT_INSTALL_PKGS="bc"
 fi
 
 if ! python -m ensurepip > /dev/null; then
     PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-    APT_INSTALL_PKGS="${APT_INSTALL} python$PYTHON_VERSION-venv"
+    APT_INSTALL_PKGS="${APT_INSTALL_PKGS} python$PYTHON_VERSION-venv"
 fi
 
 if [ "$APT_INSTALL_PKGS" != "" ]; then
@@ -25,7 +25,7 @@ if ! command -v slurm-monitor > /dev/null; then
     pip install "slurm-monitor[restapi] @ git+https://github.com/2maz/slurm-monitor"
 fi
 
-export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '/[]()' '-' | sed 's/-$//g' | sed 's/--/-/g'`
+export GPU_NAME=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '/[]()' '-' | sed 's/-$//g' | sed 's/--/-/g'`
 export GPU_SIZE=`echo $(slurm-monitor system-info -q gpus.memory_total)/1024^3 | bc`
 export GPU_COUNT=`echo $(slurm-monitor system-info -q gpus.count)`
 export GPU_FRAMEWORK=`slurm-monitor system-info -q gpus.framework`
@@ -41,7 +41,7 @@ export RUN_BENCHMARK_ONLY=0
 
 HELP_REQUIRED=0
 
-echo "$0 ${NAME_TYPE}_${NUM_GPU}x${NAME_GPU}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S"
+echo "$0 ${NAME_TYPE}_${GPU_COUNT}x${GPU_NAME}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S"
 while getopts "hd:t:prw:n:" option; do
     case $option in
     h)
@@ -147,7 +147,5 @@ if [ ! -e "run_benchmark.sh" ]; then
     exit 10
 fi
 
-./run_benchmark.sh ${NAME_TYPE}_${NUM_GPU}x${NAME_GPU}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S
-
-
+./run_benchmark.sh ${NAME_TYPE}_${GPU_COUNT}x${GPU_NAME}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S
 

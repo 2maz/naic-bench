@@ -7,11 +7,10 @@ export NAME_DATASET=all
 function usage() {
     echo "$0 <options>"
     echo "options:"
-    echo "-b    benchmark name"
     echo "-d    data directory"
     echo "-h    this help"
-    echo "-i    iteractive docker session"
     echo "-w    base/working directory"
+    echo "-n    name of the dataset"
 }
 
 SCRIPT_DIR=$(realpath -L $(dirname $0))
@@ -19,7 +18,7 @@ SCRIPT_DIR=$(realpath -L $(dirname $0))
 export BASE_DIR=$PWD
 export DATA_DIR=$BASE_DIR/data
 
-while getopts "hib:d:w:" option; do
+while getopts "hd:w:n:" option; do
     case $option in
         d)
             DATA_DIR=$(realpath -L $OPTARG)
@@ -33,6 +32,9 @@ while getopts "hib:d:w:" option; do
             BASE_DIR=$(realpath -L $OPTARG)
             export BASE_DIR
             ;;
+        n)
+            NAME_DATASET=$OPTARG
+            ;;
         *)
             ;;
     esac
@@ -42,6 +44,7 @@ echo "using:"
 echo "    SCRIPT_DIR: $SCRIPT_DIR"
 echo "    BASE_DIR: $BASE_DIR"
 echo "    DATA_DIR: $DATA_DIR"
+echo "    NAME_DATASET: $NAME_DATASET"
 
 SCRIPT_DIR=$(realpath -L $(dirname $0))
 export RESULTS_DIR=$SCRIPT_DIR/results/${NAME_RESULTS}
@@ -95,18 +98,46 @@ else
     done
 fi
 
-echo "/bin/bash -c \"cp -r /scripts/* /workspace;  ./run_prepare.sh $NAME_DATASET\""
+echo "/bin/bash -c \"cp -r /scripts/* /workspace;  cd workspace; ./run_prepare.sh $NAME_DATASET /data /workspace/benchmark\" "
 
 DL_EXAMPLES_DIR_FULLPATH=$(realpath -L $DL_EXAMPLES_DIR)
 DL_BENCHMARK_DIR_FULLPATH=$(realpath -L $DL_BENCHMARK_DIR)
 
 docker run \
-    --user 0:$(id -g) \
-    -it \
-    --rm --shm-size=16g \
+    -t \
+    --rm \
     --gpus device=$CUDA_VISIBLE_DEVICES \
-    -v ${DL_EXAMPLES_DIR_FULLPATH}/PyTorch:/workspace/benchmark \
-    -v ${DATA_DIR}:/data \
-    -v ${DL_BENCHMARK_DIR_FULLPATH}/pytorch/scripts:/scripts \
     nvcr.io/nvidia/${NAME_NGC} \
-    /bin/bash -c "cp -r /scripts/* /workspace;  ./run_prepare.sh $NAME_DATASET"
+    /bin/bash -c "echo \"SUCCESS\""
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "WARNING"
+    echo "Failed to used nvidia docker image - falling back to ubuntu:24.04"
+    echo "Note that ncf dataset will not be downloaded [PRESS ENTER TO CONTINUE]"
+    echo ""
+    read answer
+
+    # UBUNTU IMAGE USED - works for most datasets
+    docker run \
+        --user 0:$(id -g) \
+        -it \
+        --rm --shm-size=16g \
+        -v ${DL_EXAMPLES_DIR_FULLPATH}/PyTorch:/workspace/benchmark \
+        -v ${DATA_DIR}:/data \
+        -v ${DL_BENCHMARK_DIR_FULLPATH}/pytorch/scripts:/scripts \
+        ubuntu:22.04 \
+        /bin/bash -c "cp -r /scripts/* /workspace;  cd /workspace; ./run_prepare.sh $NAME_DATASET /data /workspace/benchmark"
+else
+    # NVIDIA DOCKER IMAGE used
+    docker run \
+        --user 0:$(id -g) \
+        -it \
+        --rm --shm-size=16g \
+        --gpus device=$CUDA_VISIBLE_DEVICES \
+        -v ${DL_EXAMPLES_DIR_FULLPATH}/PyTorch:/workspace/benchmark \
+        -v ${DATA_DIR}:/data \
+        -v ${DL_BENCHMARK_DIR_FULLPATH}/pytorch/scripts:/scripts \
+        nvcr.io/nvidia/${NAME_NGC} \
+        /bin/bash -c "cp -r /scripts/* /workspace;  cd /workspace; ./run_prepare.sh $NAME_DATASET /data /workspace/benchmark"
+fi
