@@ -17,7 +17,7 @@ To setup the benchmark and download the required datasets:
 
 Install a prerequisite to get some system infos:
 ```
-    ./prepare-slurm-monitor.sh -d data/ -w .
+    ./prepare-slurm-monitor.sh
 ```
 
 
