@@ -1,6 +1,15 @@
 #!/usr/bin/bash
 
-python3 -m venv venv-slurm-monitor
-. venv-slurm-monitor/bin/activate
+ARCH=$(uname -m)
+VENV_NAME=venv-$ARCH-slurm-monitor
 
-pip install git+https://github.com/2maz/slurm-monitor.git#egg=slurm-monitor[restapi]
+if [ ! -d $VENV_NAME ]; then
+    echo "Creating venv: $VENV_NAME"
+    python3 -m venv $VENV_NAME
+    pip install git+https://github.com/2maz/slurm-monitor.git#egg=slurm-monitor[restapi]
+else
+    echo "Using existing venv: $VENV_NAME"
+fi
+
+. venv-$ARCH-slurm-monitor/bin/activate
+
