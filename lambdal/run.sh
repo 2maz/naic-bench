@@ -8,6 +8,8 @@
 
 #-SBATCH --gres=gpu:1
 
+ARCH=$(uname -m)
+
 function usage() {
     echo "$0 <options>"
     echo "options:"
@@ -75,8 +77,8 @@ function user_command() {
 module load docker 
 
 if ! command -v slurm-monitor; then
-    if [ -d venv-slurm-monitor ]; then
-       source venv-slurm-monitor/bin/activate
+    if [ -d venv-$ARCH-slurm-monitor ]; then
+       source venv-$ARCH-slurm-monitor/bin/activate
     fi
 
     if ! command -v slurm-monitor; then
@@ -89,13 +91,17 @@ fi
 
 # The benchmark log files will be saved to deeplearning-benchmark/pytorch/results/$NAME_TYPE_1xA100_80GB_$(hostname)
 export NAME_TYPE=cluster
-export NAME_NGC=pytorch:24.10-py3
-# Test for this many GPUs
-export GPU_COUNT=1
+export NAME_NGC=pytorch:25.06-py3
 
-export NAME_GPU=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '[]()' '-'`
+# Test for this many GPUs
+export GPU_COUNT=${GPU_COUNT:-1}
+echo "GPUs available: $(slurm-monitor system-info -q gpus.count), benchmarking: $GPU_COUNT"
+export GPU_NAME=`echo "$(slurm-monitor system-info -q gpus.model)" | tr ' ' '-' | tr '[]()' '-'`
 export GPU_SIZE=`echo $(slurm-monitor system-info -q gpus.memory_total)/1024^3 | bc`
 export GPU_FRAMEWORK=`slurm-monitor system-info -q gpus.framework`
+
+CPU_COUNT=`echo "2*$GPU_COUNT" | bc`
+echo "CPUS used: $CPU_COUNT"
 
 export DL_BENCHMARK_DIR=$BASE_DIR/naic-deeplearning-benchmark/pytorch
 export DL_EXAMPLES_DIR=$BASE_DIR/naic-DeepLearningExamples
@@ -107,7 +113,6 @@ if [ ! -d $RESULTS_DIR ]; then
     mkdir -p $RESULTS_DIR
 fi
 
-
 DOCKER_VOLUMES="-v ${DL_EXAMPLES_DIR}/PyTorch:/workspace/benchmark "
 DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${BASE_DIR}/benchmarks.d:/workspace/benchmarks.d"
 DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${DATA_DIR}:/data"
@@ -116,7 +121,7 @@ DOCKER_VOLUMES="$DOCKER_VOLUMES -v ${RESULTS_DIR}:/results"
 
 DOCKER_ENVIRONMENT="-e GPU_COUNT=$GPU_COUNT"
 DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e GPU_SIZE=$GPU_SIZE"
-DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_GPU=$NAME_GPU"
+DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e GPU_NAME=$GPU_NAME"
 DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NAME_TYPE=$NAME_TYPE"
 DOCKER_ENVIRONMENT="$DOCKER_ENVIRONMENT -e NODE=$(hostname)"
 
@@ -154,6 +159,7 @@ elif [ "$GPU_FRAMEWORK" == "cuda" ]; then
         $DOCKER_VOLUMES \
         $DOCKER_ENVIRONMENT \
         --rm --shm-size=1024g \
+        --cpus $CPU_COUNT \
         nvcr.io/nvidia/${NAME_NGC} \
         $(user_command)
 elif [ "$GPU_FRAMEWORK" == "habana" ]; then
