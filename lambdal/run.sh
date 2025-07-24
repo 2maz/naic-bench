@@ -194,7 +194,7 @@ elif [ "$GPU_FRAMEWORK" == "xpu" ]; then
         -v /dev/dri/by-path:/dev/dri/by-path \
         --ipc=host \
         intel/intel-extension-for-pytorch:2.3.110-xpu \
-        $(user_command d xpu -i 1 -n 1)
+        $(user_command -d xpu -i 1 -n 1)
 else
     echo "Unsupported framework: $GPU_FRAMEWORK"
 fi

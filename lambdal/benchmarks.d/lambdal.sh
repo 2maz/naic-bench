@@ -11,8 +11,9 @@ if [ -z "$(command -v bc)" ]; then
     APT_INSTALL_PKGS="bc"
 fi
 
-if ! python -m ensurepip > /dev/null; then
-    PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+PYTHON_VENV_INSTALLED=$(dpkg-query -W --showformat='${Status}' python$PYTHON_VERSION-venv | grep 'install ok installed')
+if [ -z "$PYTHON_VENV_INSTALLED" ]; then
     APT_INSTALL_PKGS="${APT_INSTALL_PKGS} python$PYTHON_VERSION-venv"
 fi
 
