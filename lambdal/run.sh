@@ -148,7 +148,9 @@ if [ "$GPU_FRAMEWORK" == "rocm" ]; then
         $(user_command)
 elif [ "$GPU_FRAMEWORK" == "cuda" ]; then
     if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
-        DOCKER_CUDA_SETUP="--gpus device=$CUDA_VISIBLE_DEVICES "
+        # Use the device UUIDs to avoid ambiguities
+        DEVICE_UUIDS=$(nvidia-smi --query-gpu=uuid --format=csv,noheader | tr '\n' ',' | sed 's/,$//')
+        DOCKER_CUDA_SETUP="--gpus device='\"$DEVICE_UUIDS\"'"
     else
         DOCKER_CUDA_SETUP="--gpus all"
     fi
