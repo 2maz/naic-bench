@@ -165,7 +165,7 @@ elif [ "$GPU_FRAMEWORK" == "cuda" ]; then
         nvcr.io/nvidia/${NAME_NGC} \
         $(user_command)
 elif [ "$GPU_FRAMEWORK" == "habana" ]; then
-    HABANA_IMAGE=vault.habana.ai/gaudi-docker/1.17.1/ubuntu22.04/habanalabs/pytorch-installer-2.3.1
+    HABANA_IMAGE=vault.habana.ai/gaudi-docker/1.21.2/ubuntu24.04/habanalabs/pytorch-installer-2.6.0
 
     if [ $GPU_COUNT -eq 1 ]; then
         DOCKER_CUDA_SETUP="-e HABANA_VISIBLE_DEVICES=0"
@@ -195,7 +195,7 @@ elif [ "$GPU_FRAMEWORK" == "xpu" ]; then
         --device /dev/dri \
         -v /dev/dri/by-path:/dev/dri/by-path \
         --ipc=host \
-        intel/intel-extension-for-pytorch:2.3.110-xpu \
+        intel/intel-extension-for-pytorch:2.7.10-xpu \
         $(user_command -d xpu -i 1 -n 1)
 else
     echo "Unsupported framework: $GPU_FRAMEWORK"
