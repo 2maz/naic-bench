@@ -42,7 +42,6 @@ export RUN_BENCHMARK_ONLY=0
 
 HELP_REQUIRED=0
 
-echo "$0 ${NAME_TYPE}_${GPU_COUNT}x${GPU_NAME}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S"
 while getopts "hd:t:prw:n:" option; do
     case $option in
     h)
@@ -53,10 +52,11 @@ while getopts "hd:t:prw:n:" option; do
         ;;
     n)
         DESIRED_GPU_COUNT=$OPTARG
-	if [ $DESIRED_GPU_COUNT -gt $GPU_COUNT ]; then
-	    echo "You requested more than the available number of GPUs: $DESIRED_GPU_COUNT ($GPU_COUNT available)"
-	    exit 30
-	fi
+        if [ $DESIRED_GPU_COUNT -gt $GPU_COUNT ]; then
+            echo "You requested more than the available number of GPUs: $DESIRED_GPU_COUNT ($GPU_COUNT available)"
+            exit 30
+        fi
+        export GPU_COUNT=$DESIRED_GPU_COUNT
         ;;	
     p)  
         export PREPARE_BENCHMARK_ONLY=1
@@ -74,6 +74,8 @@ while getopts "hd:t:prw:n:" option; do
         ;;
     esac
 done
+
+echo "$0 ${NAME_TYPE}_${GPU_COUNT}x${GPU_NAME}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S"
 
 if [ ! -e $WORKSPACE_DIR/tasks.sh ]; then
     if [ -e /scripts/tasks.sh ]; then
