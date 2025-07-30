@@ -32,6 +32,12 @@ echo "Using all $GPU_COUNT available GPUs"
 echo "Running BENCHMARK=$BENCHMARK"
 
 cd $NAIC_BASE_DIR/software/naic-bench
-singularity exec -B $NAIC_DATA_DIR:/data --nv naic-benchmark.nvidia-x86_64.sif bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d cuda -n 1 -o $NAIC_BENCH_LOGS_DIR -l ex3"
+
+# NVIDIA SPECIFIC
+if [ -e naic-benchmark.nvidia-$(uname -a).sif ]; then
+    singularity exec -B $NAIC_DATA_DIR:/data --nv naic-benchmark.nvidia-$(uname -a).sif bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d cuda -n 1 -o $NAIC_BENCH_LOGS_DIR -l ex3"
+else
+    echo "singularity image naic-benchmark.nvidia-$(uname -a).sif is not available (current dir: $PWD)"
+fi
 
 
