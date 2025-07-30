@@ -12,13 +12,16 @@ echo "ACCOUNT=$USER"
 echo "GPU_COUNT=$GPU_COUNT"
 
 cd $SCRIPT_DIR
-mkdir generated
+if [ ! -d generated ]; then
+    mkdir generated
+fi
 cp naic-bench.template.sh generated/naic-bench-$NODENAME.sh
 
 sed -i "s#NODENAME#$NODENAME#g" generated/naic-bench-$NODENAME.sh
 sed -i "s#PARTITION#$PARTITION#g" generated/naic-bench-$NODENAME.sh
 sed -i "s#ACCOUNT#$USER#g" generated/naic-bench-$NODENAME.sh
-sed -i "s#GPU_COUNT#$GPU_COUNT#g" generated/naic-bench-$NODENAME.sh
+# ensure via range 0,/regex/ that only the first entry is replaced
+sed -i "0,/GPU_COUNT/s#GPU_COUNT#$GPU_COUNT#" generated/naic-bench-$NODENAME.sh
 
 echo "Generated SLURM Script: generated/naic-bench-$NODENAME.sh"
 

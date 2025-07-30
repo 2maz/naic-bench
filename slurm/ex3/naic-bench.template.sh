@@ -10,10 +10,11 @@
 
 echo "Starting job at time:" && date +%Y-%m-%d_%H:%M:%S
 set -x
-module load docker
+module load singularity-ce
 
 NAIC_BASE_DIR=/global/D1/projects/NAIC
-DATA_DIR=$NAIC_BASE_DIR/data/lambdal
+NAIC_DATA_DIR=$NAIC_BASE_DIR/data/lambdal
+NAIC_BENCH_LOGS_DIR=$NAIC_BASE_DIR/software/naic-bench/logs
 
 cd $NAIC_BASE_DIR/software/naic-bench/lambdal
 
@@ -23,7 +24,14 @@ cd $NAIC_BASE_DIR/software/naic-bench/lambdal
 GPU_COUNT=$(slurm-monitor system-info -q gpus.count)
 export GPU_COUNT
 
+# Select benchmark to avoid running all, e.g.,
+#     PyTorch_base_base_squad_FP16
+BENCHMARK=${BENCHMARK:-all}
+
 echo "Using all $GPU_COUNT available GPUs"
-./run.sh -d $DATA_DIR -w test/ -b lambdal -i
+echo "Running BENCHMARK=$BENCHMARK"
+
+cd $NAIC_BASE_DIR/software/naic-bench
+singularity exec -B $NAIC_DATA_DIR:/data --nv naic-benchmark.nvidia-x86_64.sif bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d cuda -n 1 -o $NAIC_BENCH_LOGS_DIR -l ex3"
 
 
