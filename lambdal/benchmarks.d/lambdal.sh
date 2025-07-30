@@ -42,13 +42,17 @@ export RUN_BENCHMARK_ONLY=0
 
 HELP_REQUIRED=0
 
-while getopts "hd:t:prw:n:o:" option; do
+while getopts "hd:t:prw:n:o:l:" option; do
     case $option in
     h)
         HELP_REQUIRED=1
         break;;
     d)
         export GPU_DEVICE_TYPE=$OPTARG
+        ;;
+    l)
+        # setting label
+        export NAME_TYPE=$OPTARG
         ;;
     n)
         DESIRED_GPU_COUNT=$OPTARG
@@ -99,6 +103,7 @@ if [ $HELP_REQUIRED -eq 1 ]; then
     echo "usage: $0 <options>"
     echo "options:"
     echo "  -h                    this help"
+    echo "  -l                    label, e.g., cluster name (default: test)"
     echo "  -d <gpu device type>  pick from: cuda,rocm,xpu,hl"
     echo "  -n <number-of-gpus>   number of gpus to use"
     echo "  -o <results-dir>      results directory (/default is /tmp/naic-benchmark-results-dir)"
