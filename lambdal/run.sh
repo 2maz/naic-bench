@@ -8,6 +8,12 @@
 
 #-SBATCH --gres=gpu:1
 
+HABANA_DOCKER_IMAGE=vault.habana.ai/gaudi-docker/1.21.2/ubuntu24.04/habanalabs/pytorch-installer-2.6.0
+NVIDIA_DOCKER_IMAGE=nvcr.io/nvidia/pytorch:25.06-py3
+ROCM_DOCKER_IMAGE=rocm/pytorch:rocm6.4.2_ubuntu22.04_py3.10_pytorch_release_2.6.0
+#XPU_DOCKER_IMAGE=intel/intel-extension-for-pytorch:2.7.10-xpu --> missing libmetee
+XPU_DOCKER_IMAGE=intel/intel-extension-for-pytorch:2.6.10-xpu
+
 ARCH=$(uname -m)
 
 function usage() {
@@ -91,7 +97,7 @@ fi
 
 # The benchmark log files will be saved to deeplearning-benchmark/pytorch/results/$NAME_TYPE_1xA100_80GB_$(hostname)
 export NAME_TYPE=cluster
-export NAME_NGC=pytorch:25.06-py3
+
 
 # Test for this many GPUs
 export GPU_COUNT=${GPU_COUNT:-1}
@@ -144,7 +150,7 @@ if [ "$GPU_FRAMEWORK" == "rocm" ]; then
         --device=/dev/dri \
         --group-add video \
         --ipc=host \
-        rocm/pytorch:latest \
+        $ROCM_DOCKER_IMAGE \
         $(user_command)
 elif [ "$GPU_FRAMEWORK" == "cuda" ]; then
     if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
@@ -162,11 +168,9 @@ elif [ "$GPU_FRAMEWORK" == "cuda" ]; then
         $DOCKER_ENVIRONMENT \
         --rm --shm-size=1024g \
         --cpus $CPU_COUNT \
-        nvcr.io/nvidia/${NAME_NGC} \
+        $NVIDIA_DOCKER_IMAGE \
         $(user_command)
 elif [ "$GPU_FRAMEWORK" == "habana" ]; then
-    HABANA_IMAGE=vault.habana.ai/gaudi-docker/1.21.2/ubuntu24.04/habanalabs/pytorch-installer-2.6.0
-
     if [ $GPU_COUNT -eq 1 ]; then
         DOCKER_CUDA_SETUP="-e HABANA_VISIBLE_DEVICES=0"
     else
@@ -184,7 +188,7 @@ elif [ "$GPU_FRAMEWORK" == "habana" ]; then
         --cap-add=sys_nice \
         --shm-size=32g \
         --net=host \
-        $HABANA_IMAGE \
+        $HABANA_DOCKER_IMAGE \
         $(user_command -d hpu -i 100 -n 100)
 elif [ "$GPU_FRAMEWORK" == "xpu" ]; then
     docker run \
@@ -195,7 +199,7 @@ elif [ "$GPU_FRAMEWORK" == "xpu" ]; then
         --device /dev/dri \
         -v /dev/dri/by-path:/dev/dri/by-path \
         --ipc=host \
-        intel/intel-extension-for-pytorch:2.7.10-xpu \
+        $XPU_DOCKER_IMAGE \
         $(user_command -d xpu -i 1 -n 1)
 else
     echo "Unsupported framework: $GPU_FRAMEWORK"
