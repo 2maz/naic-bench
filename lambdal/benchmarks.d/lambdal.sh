@@ -42,7 +42,7 @@ export RUN_BENCHMARK_ONLY=0
 
 HELP_REQUIRED=0
 
-while getopts "hd:t:prw:n:" option; do
+while getopts "hd:t:prw:n:o:" option; do
     case $option in
     h)
         HELP_REQUIRED=1
@@ -58,6 +58,9 @@ while getopts "hd:t:prw:n:" option; do
         fi
         export GPU_COUNT=$DESIRED_GPU_COUNT
         ;;	
+    o)
+        export RESULTS_DIR=$OPTARG
+        ;;
     p)  
         export PREPARE_BENCHMARK_ONLY=1
         ;;
@@ -98,6 +101,7 @@ if [ $HELP_REQUIRED -eq 1 ]; then
     echo "  -h                    this help"
     echo "  -d <gpu device type>  pick from: cuda,rocm,xpu,hl"
     echo "  -n <number-of-gpus>   number of gpus to use"
+    echo "  -o <results-dir>      results directory (/default is /tmp/naic-benchmark-results-dir)"
     echo "  -p                    only prepare benchmark (install required software)"
     echo "  -r                    only run benchmark"
     echo "  -w <workspace dir>    set workspace directory"
