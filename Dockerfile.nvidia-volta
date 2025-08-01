@@ -1,0 +1,46 @@
+FROM nvcr.io/nvidia/pytorch:25.01-py3
+
+RUN apt update && apt upgrade -y
+RUN apt install -y bc vim git
+
+RUN git config --global user.email "roehr@simula.no"
+RUN git config --global user.name "Thomas Roehr"
+
+WORKDIR /naic-workspace/resources/
+RUN git clone -b main https://github.com/2maz/naic-bench naic-bench
+RUN git clone -b lambda/benchmark https://github.com/2maz/naic-DeepLearningExamples deeplearning-examples
+RUN git clone -b dev https://github.com/2maz/naic-deeplearning-benchmark deeplearning-benchmark
+RUN pip install "slurm-monitor[restapi] @ git+https://github.com/2maz/slurm-monitor"
+
+WORKDIR /naic-workspace
+RUN ln -s /naic-workspace/resources/deeplearning-examples/PyTorch benchmark
+RUN cp -R /naic-workspace/resources/deeplearning-benchmark/pytorch/scripts/* .
+
+# PREPARE PYTHON FROM SOURCE TO SUPPORT OLDER 
+RUN mv /opt/pytorch/pytorch /opt/pytorch/pytorch.old
+RUN git clone https://github.com/pytorch/pytorch /opt/pytorch/pytorch
+
+WORKDIR /opt/pytorch/pytorch
+# Only to build other versions
+RUN git checkout tags/v2.6.0
+RUN git submodules sync; git submodule update --init --recursive
+RUN rm -rf third_party/XNNPACK; cd /opt/pytorch/pytorch/third_party; git clone https://github.com/google/XNNPack.git XNNPACK
+RUN cd /opt/pytorch/pytorch/third_party/XNNPACK; git reset --hard 5f23827e66cca435fa400b6e221892ac95af0079
+
+# The following is only necessary for images for torch 2.8.0
+# RUN sed -i '/torch==/d' /etc/pip/constraint.txt
+# Do not use development build to ensure torch can be loaded outside of /opt/pytorch/pytorch
+
+WORKDIR /opt/pytorch/pytorch
+RUN TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 9.0 10.0 12.0+PTX" USE_PRIORITIZED_TEXT_FOR_LD=1 python -m pip install --no-build-isolation -v .
+
+WORKDIR /opt/pytorch/vision
+RUN python -m pip install --no-build-isolation -v .
+
+WORKDIR /opt/pytorch/apex
+RUN TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 9.0 10.0" pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./
+
+WORKDIR /naic-workspace
+
+# prepare all benchmarks
+#RUN /naic-workspace/resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -t all -p

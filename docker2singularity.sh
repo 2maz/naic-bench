@@ -51,13 +51,14 @@ function singularity_build {
         rm $TAR_FILE
     fi
 
-    echo >&2 "Saving docker image as tar file"
+    echo >&2 "Saving docker image as tar file: $TAR_FILE"
     docker save -o $TAR_FILE naic/benchmark-$suffix-$ARCH:latest
 
 
     if [ -e $SIF_FILE ]; then
         rm $SIF_FILE
     fi
+    echo >&2 "Building $SIF_FILE"
     singularity build $SIF_FILE docker-archive://$TAR_FILE
 
     echo >&2 "Cleaning up $TAR_FILE"

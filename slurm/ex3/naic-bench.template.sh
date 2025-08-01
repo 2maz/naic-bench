@@ -8,6 +8,8 @@
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:GPU_COUNT
 
+GPU_TYPE=${1:nvidia}
+
 echo "Starting job at time:" && date +%Y-%m-%d_%H:%M:%S
 set -x
 module load singularity-ce
@@ -27,17 +29,24 @@ export GPU_COUNT
 # Select benchmark to avoid running all, e.g.,
 #     PyTorch_base_base_squad_FP16
 BENCHMARK=${BENCHMARK:-all}
+SIF_IMAGE_NAME=naic-benchmark.$GPU_TYPE-$(uname -m).sif
 
 echo "Using all $GPU_COUNT available GPUs"
 echo "Running BENCHMARK=$BENCHMARK"
 
 cd $NAIC_BASE_DIR/software/naic-bench
 
-# NVIDIA SPECIFIC
-if [ -e naic-benchmark.nvidia-$(uname -a).sif ]; then
-    singularity exec -B $NAIC_DATA_DIR:/data --nv naic-benchmark.nvidia-$(uname -a).sif bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d cuda -n 1 -o $NAIC_BENCH_LOGS_DIR -l ex3"
-else
-    echo "singularity image naic-benchmark.nvidia-$(uname -a).sif is not available (current dir: $PWD)"
+if [ ! -e $SIF_IMAGE_NAME ]; then
+    echo "singularity image $SIF_IMAGE_NAME is not available (current dir: $PWD)"
+    exit 10
 fi
 
+EXTRA_ARGS=
+if [ "$GPU_TYPE" == "nvidia" ]; then
+    EXTRA_ARGS="--nv"
+elif [ "$GPU_TYPE" == "habana" ]; then
+    EXTRA_ARGS="-B /tmp/var-log-habana-logs/:/var/log/habana_logs"
+fi
+
+singularity exec -B $NAIC_DATA_DIR:/data $EXTRA_ARGS $SIF_IMAGE_NAME bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d cuda -n $GPU_COUNT -o $NAIC_BENCH_LOGS_DIR -l ex3"
 
