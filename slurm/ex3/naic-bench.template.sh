@@ -42,11 +42,20 @@ if [ ! -e $SIF_IMAGE_NAME ]; then
 fi
 
 EXTRA_ARGS=
+DEVICE_MODEL=
 if [ "$GPU_TYPE" == "nvidia" ]; then
     EXTRA_ARGS="--nv"
+    DEVICE_MODEL=cuda
 elif [ "$GPU_TYPE" == "habana" ]; then
     EXTRA_ARGS="-B /tmp/var-log-habana-logs/:/var/log/habana_logs"
+    DEVICE_MODEL=hpu
+elif [ "$GPU_TYPE" == "xpu" ]; then
+    DEVICE_MODEL=xpu
 fi
 
-singularity exec -B $NAIC_DATA_DIR:/data $EXTRA_ARGS $SIF_IMAGE_NAME bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d cuda -n $GPU_COUNT -o $NAIC_BENCH_LOGS_DIR -l ex3"
+if [ -z "$DEVICE_MODEL" ]; then
+    echo "No device model set."
+fi
+
+singularity exec -B $NAIC_DATA_DIR:/data $EXTRA_ARGS $SIF_IMAGE_NAME bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d $DEVICE_MODEL -n $GPU_COUNT -o $NAIC_BENCH_LOGS_DIR -l ex3"
 
