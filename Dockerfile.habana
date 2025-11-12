@@ -16,6 +16,13 @@ WORKDIR /naic-workspace
 RUN ln -s /naic-workspace/resources/deeplearning-examples/PyTorch benchmark
 RUN cp -R /naic-workspace/resources/deeplearning-benchmark/pytorch/scripts/* .
 
+# remove /root from the PYTHONPATH
+ENV PYTHONPATH /var/lib/habanalabs
+
+ENV PT_HPU_LAZY_MODE 0
+# Disable torch.jit since it leads to issues running transformerxl* benchmarks
+ENV PYTORCH_JIT 0
+
 # prepare all benchmarks needs to be done separately
 # RUN /naic-workspace/resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -t all -p
 
