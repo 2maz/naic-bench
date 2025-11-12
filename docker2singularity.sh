@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-set -ex
+set -e
 
 module load docker
 module load singularity-ce
@@ -7,7 +7,18 @@ module load singularity-ce
 SCRIPT_DIR=$(realpath -L $(dirname $0))
 
 ARCH=$(uname -i)
-GPU_FRAMEWORK=nvidia
+GPU_FRAMEWORK=
+
+function print_usage {
+    echo "usage $0"
+    echo "By default go through all step to build a singularity image"
+    echo ""
+    echo "Options:"
+    echo "    -g   the GPU type to build for 'nvidia','nvidia-volta','habana','xpu','rocm'"
+    echo "    -d   build docker image (step 1)"
+    echo "    -p   prepare docker benchmarks (step 2)"
+    echo "    -s   build singularity image from existing docker image(step 3)"
+}
 
 function docker_build {
     suffix=$1
@@ -80,18 +91,19 @@ while getopts "hg:dps" option; do
             BUILD_SINGULARITY=1
             ;;
         h)
-            echo "usage $0"
-            echo "By default go through all step to build a singularity image"
-            echo ""
-            echo "Options:"
-            echo "    -d   build docker image (step 1)"
-            echo "    -p   prepare docker benchmarks (step 2)"
-            echo "    -s   build singularity image from existing docker image(step 3)"
+            print_usage
+            exit 0
             ;;
         *)
             ;;
     esac
 done
+
+if [ -z "$GPU_FRAMEWORK" ]; then
+    echo -e "\033[31mERROR: Missing GPU target (use -g)\033[0m"
+    print_usage
+    exit 0
+fi
 
 if [ -z "$BUILD_DOCKER" ] && [ -z "$PREPARE_DOCKER_BENCHMARKS" ] && [ -z "$BUILD_SINGULARITY" ]; then
     BUILD_DOCKER=1
