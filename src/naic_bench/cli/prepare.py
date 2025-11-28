@@ -15,7 +15,7 @@ class PrepareParser(BaseParser):
         parser.add_argument("--benchmarks-dir", required=True, default=None, type=str)
         parser.add_argument("--confd-dir", default="./conf.d", type=str)
 
-        parser.add_argument("--benchmark-name",
+        parser.add_argument("--benchmark",
                 nargs="+",
                 type=str,
                 default=None,
@@ -31,5 +31,5 @@ class PrepareParser(BaseParser):
 
         bp.install_prerequisites()
 
-        bp.prepare(args.benchmark_name)
+        bp.prepare(args.benchmark)
 
