@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+DATA_DIR=$(realpath -L ${1:-/data})
+BENCHMARK_DIR=$(realpath -L ${2:-benchmark})
+
+## ------------------------
+## PyTorch BERT Squad
+## ------------------------
+echo "PyTorch BERT Squad"
+pushd .
+mkdir -p $DATA_DIR/squad
+cd $BENCHMARK_DIR/LanguageModeling/BERT$DATA_DIR/squad
+
+./squad_download.sh $DATA_DIR/squad
+popd
+chmod -R a+rwx $DATA_DIR/squad
+
+pushd .
+mkdir -p $DATA_DIR/bert_large
+cd $DATA_DIR/bert_large
+curl -LO https://lambdalabs-files.s3-us-west-2.amazonaws.com/bert_large/bert_large_uncased.pt
+curl -LO https://lambdalabs-files.s3-us-west-2.amazonaws.com/bert_large/bert_config.json
+wget https://lambdalabs-files.s3-us-west-2.amazonaws.com/bert_large/bert-large-uncased-vocab.txt
+popd
+chmod -R a+rwx $DATA_DIR/bert_large
+
+pushd .
+mkdir -p $DATA_DIR/bert_base
+cd $DATA_DIR/bert_base
+curl -LO https://lambdalabs-files.s3-us-west-2.amazonaws.com/bert_base/bert_base_uncased.pt
+curl -LO https://lambdalabs-files.s3-us-west-2.amazonaws.com/bert_base/bert_config.json
+wget https://lambdalabs-files.s3-us-west-2.amazonaws.com/bert_base/bert-base-uncased-vocab.txt
+popd
+chmod -R a+rwx $DATA_DIR/bert_base

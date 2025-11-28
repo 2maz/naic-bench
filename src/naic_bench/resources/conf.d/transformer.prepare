@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+DATA_DIR=$(realpath -L ${1:-/data})
+BENCHMARK_DIR=$(realpath -L ${2:-benchmark})
+
+## -------------------------
+## PyTorch transformer XL
+## -------------------------
+echo "PyTorch transformer XL"
+pushd .
+mkdir -p $DATA_DIR/transformer-xl
+
+cd $BENCHMARK_DIR/LanguageModeling/Transformer-XL
+bash getdata.sh $DATA_DIR
+
+chmod -R a+rwx $DATA_DIR/transformer-xl
+popd

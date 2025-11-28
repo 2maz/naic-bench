@@ -1,0 +1,41 @@
+pytorch:
+  ssd:
+    repo: 
+      url: https://github.com/2maz/naic-DeepLearningExamples.git
+    command: >
+      python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} main.py --mode benchmark-training
+    prepare:
+      data: object_detection.prepare
+    metrics:
+      throughput:
+        pattern: "^.*Average images/sec:.*$"
+        split_by: ' '
+        match_group_index: -6
+    variants:
+      fp32:
+        base_dir: PyTorch/Detection/SSD
+        batch_size:
+          size_1gb: 3
+          multiple_pu_scaling_factor: 0.6
+          apply_via: --batch-size
+        arguments:
+          data: "{{DATA_DIR}}/object_detection"
+          benchmark-warmup: 50
+          benchmark-iterations: 200
+          learning-rate: 0
+          num-workers: 64
+          save:  "{{TMP_DIR}}/models"
+      amp:
+        base_dir: PyTorch/Detection/SSD
+        batch_size:
+          size_1gb: 6
+          multiple_gpu_scaling_factor: 0.6
+          apply_via: --batch-size
+        arguments:
+          data: "{{DATA_DIR}}/object_detection"
+          benchmark-warmup: 50
+          benchmark-iterations: 200
+          learning-rate: 0
+          num-workers: 64
+          save:  "{{TMP_DIR}}/models"
+          amp:

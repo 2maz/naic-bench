@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+DATA_DIR=$(realpath -L ${1:-/data})
+BENCHMARK_DIR=$(realpath -L ${2:-benchmark})
+
+## -------------------------
+## PyTorch NCF
+## -------------------------
+echo "PyTorch NCF"
+if [ ! "$(command -v nvidia-smi)" ]; then
+    echo " nvidia-smi is not available -- this download script requires an NVIDIA GPU"
+    exit 10
+fi
+
+NUMBER_OF_GPUS=$(nvidia-smi -L | wc -l)
+if [ $NUMBER_OF_GPUS -eq 0 ]; then
+    echo " no GPU available -- this download script requires an NVIDIA GPU"
+    exit 11
+fi
+
+pushd .
+
+cd $BENCHMARK_DIR/Recommendation/NCF
+mkdir -p $DATA_DIR/ncf
+
+./prepare_dataset.sh ml-20m $DATA_DIR/ncf
+chmod -R a+rwx $DATA_DIR/ncf
+
+popd

@@ -7,29 +7,32 @@ module load singularity-ce
 SCRIPT_DIR=$(realpath -L $(dirname $0))
 
 ARCH=$(uname -i)
-GPU_FRAMEWORK=
+COMPUTE_PLATFORM=
+COMPUTE_PLATFORMS=$(ls $SCRIPT_DIR/docker/Dockerfile.* | cut -d. -f2 | tr '\n' ',' | sed 's/,$//g')
+
+DATA_DIR=$(realpath -L $SCRIPT_DIR/../../data/lambdal)
 
 function print_usage {
     echo "usage $0"
     echo "By default go through all step to build a singularity image"
     echo ""
     echo "Options:"
-    echo "    -g   the GPU type to build for 'nvidia','nvidia-volta','habana','xpu','rocm'"
+    echo "    -c   the compute platform to build for: $COMPUTE_PLATFORMS"
     echo "    -d   build docker image (step 1)"
     echo "    -p   prepare docker benchmarks (step 2)"
-    echo "    -s   build singularity image from existing docker image(step 3)"
+    echo "    -s   build singularity image from existing docker image (step 3)"
 }
 
 function docker_build {
     suffix=$1
-    if [ ! -e Dockerfile.$suffix ]; then
-        echo "Failed to locate Dockerfile.$suffix"
+    if [ ! -e $SCRIPT_DIR/docker/Dockerfile.$suffix ]; then
+        echo "Failed to locate $SCRIPT_DIR/docker/Dockerfile.$suffix"
         exit 10
     fi
     
     echo >&2 "Building docker image for $suffix-$ARCH"
     DOCKER_IMAGE_NAME=naic/benchmark-$suffix-$ARCH
-    docker build --no-cache -t $DOCKER_IMAGE_NAME -f $SCRIPT_DIR/Dockerfile.$suffix .
+    docker build --no-cache -t $DOCKER_IMAGE_NAME -f $SCRIPT_DIR/docker/Dockerfile.$suffix .
 }
 
 function docker_prepare_benchmarks {
@@ -55,8 +58,8 @@ function docker_prepare_benchmarks {
 function singularity_build {
     suffix=$1
 
-    TAR_FILE="naic-benchmark-$suffix-$ARCH.tar"
-    SIF_FILE="naic-benchmark.$suffix-$ARCH.sif"
+    TAR_FILE="$SCRIPT_DIR/images/naic-benchmark-$suffix-$ARCH.tar"
+    SIF_FILE="$SCRIPT_DIR/images/naic-benchmark.$suffix-$ARCH.sif"
 
     if [ -e $TAR_FILE ]; then 
         rm $TAR_FILE
@@ -76,10 +79,10 @@ function singularity_build {
     rm $TAR_FILE 
 }
 
-while getopts "hg:dps" option; do
+while getopts "hc:dps" option; do
     case $option in
-        g)
-            GPU_FRAMEWORK=$OPTARG
+        c)
+            COMPUTE_PLATFORM=$OPTARG
             ;;
         d)
             BUILD_DOCKER=1
@@ -99,8 +102,8 @@ while getopts "hg:dps" option; do
     esac
 done
 
-if [ -z "$GPU_FRAMEWORK" ]; then
-    echo -e "\033[31mERROR: Missing GPU target (use -g)\033[0m"
+if [ -z "$COMPUTE_PLATFORM" ]; then
+    echo -e "\033[31mERROR: Missing COMPUTE_PLATFORM target (use -c)\033[0m"
     print_usage
     exit 0
 fi
@@ -112,21 +115,21 @@ if [ -z "$BUILD_DOCKER" ] && [ -z "$PREPARE_DOCKER_BENCHMARKS" ] && [ -z "$BUILD
 fi
 
 if [ -n "$BUILD_DOCKER" ]; then
-    docker_build $GPU_FRAMEWORK
+    docker_build $COMPUTE_PLATFORM
 fi
 
 if [ -n "$PREPARE_DOCKER_BENCHMARKS" ]; then
-    docker_prepare_benchmarks $GPU_FRAMEWORK
+    docker_prepare_benchmarks $COMPUTE_PLATFORM
 fi
 
 if [ -n "$BUILD_SINGULARITY" ]; then
-    singularity_build $GPU_FRAMEWORK
+    singularity_build $COMPUTE_PLATFORM
 
-    echo "Run the following to start:"
-    if [ "$GPU_FRAMEWORK" == "habana" ]; then
-        echo "    singularity shell -B $(realpath -L $PWD/../../data/lambdal):/data -B $PWD/var-log-habana:/var/log/habana_logs naic-benchmark.$GPU_FRAMEWORK-$ARCH.sif"
+    echo "Run the following to start (after verifing the availability of the data directory):"
+    if [ "$COMPUTE_PLATFORM" == "habana" ]; then
+        echo "    singularity shell -B $DATA_DIR:/data -B $PWD/var-log-habana:/var/log/habana_logs naic-benchmark.$COMPUTE_PLATFORM-$ARCH.sif"
     else
-        echo "    singularity shell -B $(realpath -L $PWD/../../data/lambdal):/data --nv naic-benchmark.$GPU_FRAMEWORK-$ARCH.sif"
+        echo "    singularity shell -B $DATA_DIR:/data --nv naic-benchmark.$COMPUTE_PLATFORM-$ARCH.sif"
     fi
 fi
 

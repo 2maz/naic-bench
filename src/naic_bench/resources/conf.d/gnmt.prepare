@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+# -------------------------
+# PyTorch gnmt
+# -------------------------
+echo "PyTorch gnmt"
+pushd .
+
+echo "BENCHMARK_DIR=$BENCHMARK_DIR"
+echo "TMP_DIR=$TMP_DIR"
+echo "DATA_DIR=$DATA_DIR"
+
+cd $BENCHMARK_DIR
+
+pip install -r requirements.txt
+mkdir -p $DATA_DIR/gnmt/wmt16_de_en
+bash scripts/wmt16_en_de.sh $DATA_DIR/gnmt/wmt16_de_en
+chmod -R a+rwx $DATA_DIR/gnmt/
+
+popd

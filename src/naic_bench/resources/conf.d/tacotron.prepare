@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+DATA_DIR=$(realpath -L ${1:-/data})
+BENCHMARK_DIR=$(realpath -L ${2:-benchmark})
+
+## -------------------------
+## PyTorch tacotron2
+## -------------------------
+echo "PyTorch tacotron2"
+pushd .
+
+mkdir -p $DATA_DIR/tacotron2
+cd $BENCHMARK_DIR/SpeechSynthesis/Tacotron2/scripts
+./prepare_dataset.sh $DATA_DIR/tacotron2
+chmod -R a+rwx $DATA_DIR/tacotron2
+
+popd

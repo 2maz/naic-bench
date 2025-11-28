@@ -1,0 +1,49 @@
+pytorch:
+  tacotron:
+    repo: 
+      url: https://github.com/2maz/naic-DeepLearningExamples.git
+    command: >
+      python -m multiproc {{GPU_COUNT}} train.py
+    prepare:
+      data: tactoron.prepare
+    metrics:
+      throughput:
+        pattern: "train_items_per_sec\\s+:\\s+([0-9e\\.+]\\+)"
+    variants:
+      fp32:
+        base_dir: PyTorch/SpeechSynthesis/Tacotron2
+        batch_size:
+          size_1gb: 3
+          multiple_pu_scaling_factor: 0.6
+          apply_via: --batch-size
+        arguments:
+          o: "{{TMP_DIR}}"
+          model-name: "Tacotron2"
+          learning-rate: 0.00001
+          epochs: 4
+          weight-decay: 1e-6
+          grad-clip-thresh: 1.0
+          log-file: "{{TMP_DIR}}/nvlog.json"
+          training-files: "filelists/ljs_audio_text_train_subset_1250_filelist.txt"
+          dataset-path: "{{DATA_DIR}}/tacotron2"
+          cudnn-enabled:
+          no-checkpoints:
+      fp16:
+        base_dir: PyTorch/SpeechSynthesis/Tacotron2
+        batch_size:
+          size_1gb: 6
+          multiple_pu_scaling_factor: 0.6
+          apply_via: --batch-size
+        arguments:
+          o: "{{TMP_DIR}}"
+          model-name: "Tacotron2"
+          learning-rate: 0.00001
+          epochs: 4
+          weight-decay: 1e-6
+          grad-clip-thresh: 1.0
+          log-file: "{{TMP_DIR}}/nvlog.json"
+          training-files: "filelists/ljs_audio_text_train_subset_2500_filelist.txt"
+          dataset-path: "{{DATA_DIR}}/tacotron2"
+          cudnn-enabled:
+          no-checkpoints:
+          amp:

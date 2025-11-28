@@ -1,0 +1,59 @@
+pytorch:
+  bert_base_squad:
+    repo: 
+      url: https://github.com/2maz/naic-DeepLearningExamples.git
+      branch: lambda/benchmark
+    prepare: 
+      data: bert.prepare
+    command: >
+      python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} run_squad.py
+    metrics:
+      throughput:
+        pattern: "training_sequences_per_second\\s+:\\s+([0-9\\.]+)"
+    variants:
+      fp16:
+        base_dir: PyTorch/LanguageModeling/BERT
+        batch_size:
+          size_1gb: 2
+          apply_via: --train_batch_size
+        arguments:
+          fp16:
+          do_lower_case:
+          bert_model: bert-large-uncased
+          max_seq_length: 384
+          doc_stride: 128
+          do_train:
+          train_file: "{{DATA_DIR}}/squad/v1.1/train-v1.1.json"
+          init_checkpoint: "{{DATA_DIR}}/bert_base/bert_base_uncased.pt"
+          num_train_epochs: 2
+          learning_rate: 0.0
+          warmup_proportion: 0.1
+          seed: 1
+          vocab_file: "{{DATA_DIR}}/bert_base/bert-base-uncased-vocab.txt"
+          output_dir: "{{TMP_DIR}}"
+          config_file: "{{DATA_DIR}}/bert_base/bert_config.json"
+          max_steps: 100
+          json-summary: "{{TMP_DIR}}/dllogger-summary.json"
+      fp32:
+        base_dir: PyTorch/LanguageModeling/BERT
+        batch_size:
+          size_1gb: 2
+          apply_via: --train_batch_size
+        arguments:
+          do_lower_case:
+          bert_model: bert-large-uncased
+          max_seq_length: 384
+          doc_stride: 128
+          do_train:
+          train_file: "{{DATA_DIR}}/squad/v1.1/train-v1.1.json"
+          init_checkpoint: "{{DATA_DIR}}/bert_base/bert_base_uncased.pt"
+          num_train_epochs: 2
+          learning_rate: 0.0
+          warmup_proportion: 0.1
+          seed: 1
+          vocab_file: "{{DATA_DIR}}/bert_base/bert-base-uncased-vocab.txt"
+          output_dir: "{{TMP_DIR}}"
+          mode: "train"
+          config_file: "{{DATA_DIR}}/bert_base/bert_config.json"
+          max_steps: 100
+          json-summary: "{{TMP_DIR}}/dllogger-summary.json"

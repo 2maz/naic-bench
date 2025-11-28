@@ -1,0 +1,33 @@
+pytorch:
+  ncf:
+    repo: 
+      url: https://github.com/2maz/naic-DeepLearningExamples.git
+    command: >
+      python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} ncf.py
+    prepare:
+      data: ncf
+    metrics:
+      throughput:
+        pattern: "best_train_throughput\\s+:\\s+([0-9\\.e+]+)"
+    variants:
+      fp32:
+        base_dir: PyTorch/Recommendation/NCF
+        batch_size:
+          size_1gb: 80000
+          multiple_pu_scaling_factor: 0.7
+          apply_via: --batch_size
+        arguments:
+          data: "{{DATA_DIR}}/ncf/cache/ml-20m"
+          epochs: 2
+          log_path: "{{TMP_DIR}}/ncf.log"
+      fp16:
+        base_dir: PyTorch/Recommendation/NCF
+        batch_size:
+          size_1gb: 160000
+          multiple_pu_scaling_factor: 0.7
+          apply_via: --batch_size
+        arguments:
+          data: "{{DATA_DIR}}/ncf/cache/ml-20m"
+          epochs: 2
+          log_path: "{{TMP_DIR}}/ncf.log"
+          amp:

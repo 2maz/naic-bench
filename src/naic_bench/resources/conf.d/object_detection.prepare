@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+DATA_DIR=$(realpath -L ${1:-/data})
+BENCHMARK_DIR=$(realpath -L ${2:-benchmark})
+
+# -------------------------
+# PyTorch_SSD & MaskRCNN
+# -------------------------
+echo "PyTorch_SSD & MaskRCNN"
+pushd .
+
+cd $BENCHMARK_DIR/PyTorch/Detection/SSD
+
+./download_dataset.sh $DATA_DIR/object_detection
+chmod -R a+rwx $DATA_DIR/object_detection
+
+popd
