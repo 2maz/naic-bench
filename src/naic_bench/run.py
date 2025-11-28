@@ -2,6 +2,7 @@ from pathlib import Path
 import subprocess
 import logging
 import yaml
+import os
 import platform
 import site
 import selectors
@@ -99,9 +100,11 @@ class BenchmarkRunner:
                     stderr=subprocess.PIPE,
                 ) as process:
 
+            os.set_blocking(process.stdout.fileno(), False)
             stdout_selector = selectors.DefaultSelector()
             stdout_selector.register(process.stdout, selectors.EVENT_READ)
 
+            os.set_blocking(process.stderr.fileno(), False)
             stderr_selector = selectors.DefaultSelector()
             stderr_selector.register(process.stderr, selectors.EVENT_READ)
 
