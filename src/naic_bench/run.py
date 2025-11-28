@@ -1,13 +1,7 @@
 from pathlib import Path
 import subprocess
 import logging
-import os
 import yaml
-from pydantic import BaseModel, Field, computed_field
-from pydantic_settings import BaseSettings, SettingsConfigDict
-import tempfile
-import re
-import math
 import platform
 import site
 import selectors
@@ -19,10 +13,7 @@ from slurm_monitor.utils.system_info import SystemInfo
 
 from naic_bench.utils import pipe_has_data
 from naic_bench.spec import (
-        Repository,
-        Metric,
         VirtualEnv,
-        BatchSize,
         Report,
         BenchmarkSpec
 )
@@ -69,7 +60,7 @@ class BenchmarkRunner:
             subprocess.run(["python3", "-m", "venv", venv_name],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
-            
+
             requirements_txt = workdir / "requirements.txt"
             if requirements_txt.exists():
                 subprocess.run(f". {venv_name}/bin/activate; PYTHONPATH={venv.python_path} pip install -r {requirements_txt}", shell=True)
@@ -96,8 +87,6 @@ class BenchmarkRunner:
         logger.info(f"Execute: {cmd} in {workdir}")
 
         venv = self.prepare_venv(benchmark_name=name, workdir=workdir)
-
-        metrics = {}
 
         stdout = []
         stderr = []
@@ -132,7 +121,7 @@ class BenchmarkRunner:
                         stderr.append(output_line)
 
                 time.sleep(0.1)
-            
+
             end_time = dt.datetime.now(tz=dt.timezone.utc)
             # Get remaining lines
             for line in process.stdout:
@@ -148,7 +137,7 @@ class BenchmarkRunner:
             if process.returncode != 0:
                 error_details = '\n'.join(stderr)
                 raise RuntimeError(f"Benchmark {name=} {variant=} failed -- details: {error_details}")
-       
+
         with open(config.temp_dir / "stdout.log", "w") as f:
             for line in stdout:
                 f.write(f"{line}\n")
@@ -156,17 +145,17 @@ class BenchmarkRunner:
         with open(config.temp_dir / "stderr.log", "w") as f:
             for line in stderr:
                 f.write(f"{line}\n")
-        
+
         si = SystemInfo()
 
         with open(config.temp_dir / "system_info.yaml", "w") as f:
             data = dict(si)
-           
-			try: 
-				import torch
-				data['software'] = { 'torch': torch.__version__ }
-			except LoadError:
-				logger.warn("BenchmarkRunner: failed to check torch version"
+
+            try:
+                import torch
+                data['software'] = { 'torch': torch.__version__ }
+            except ImportError:
+                logger.warning("BenchmarkRunner: failed to check torch version")
 
             yaml.dump(data, f)
 

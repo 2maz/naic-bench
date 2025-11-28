@@ -6,20 +6,16 @@ import logging
 import os
 import yaml
 from pydantic import BaseModel, Field, computed_field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 import tempfile
 import re
 import math
 import platform
-import site
-import sys
-import time
-import datetime as dt
 
 logger = logging.getLogger(__name__)
 
 BENCHMARK_SPEC_SUFFIX = ".yaml"
-        
+
 class Repository(BaseModel):
     url: str
     branch: str = Field(default=None)
@@ -27,9 +23,9 @@ class Repository(BaseModel):
 
     def clone(self, workdir: Path | str, name: str | None = None):
         cmd = ["git", "clone"]
-        if branch:
-            cmd += ["-b", branch]
-        cmd += [url]
+        if self.branch:
+            cmd += ["-b", self.branch]
+        cmd += [self.url]
 
         if name is None:
             name = Path(self.url).stem
@@ -39,9 +35,9 @@ class Repository(BaseModel):
 
         subprocess.run(cmd)
 
-        if commit:
-            logger.info(f"Setting repo={repo_dir} to {commit=}")
-            subprocess.Popen(["git", "reset", "--hard", commit], cwd=repo_dir)
+        if self.commit:
+            logger.info(f"Setting repo={repo_dir} to {self.commit}")
+            subprocess.Popen(["git", "reset", "--hard", self.commit], cwd=repo_dir)
 
 class VirtualEnv(BaseModel):
     name: str
@@ -214,11 +210,11 @@ class BenchmarkSpec(BaseSettings):
             data = yaml.load(f, Loader=yaml.SafeLoader)
 
         for framework, benchmarks in data.items():
-            if not framework in benchmark_specs:
+            if framework not in benchmark_specs:
                 benchmark_specs[framework] = {}
 
             for benchmark_name, config in benchmarks.items():
-                if not benchmark_name in benchmark_specs[framework]:
+                if benchmark_name not in benchmark_specs[framework]:
                     benchmark_specs[framework][benchmark_name] = {}
 
                 env = {}
@@ -232,7 +228,7 @@ class BenchmarkSpec(BaseSettings):
 
                 if missing_fields:
                     raise RuntimeError(f"Fields '{','.join(missing_fields)}' missing in run configuration of {benchmark_name}")
-               
+
                 command = config['command']
                 repo = Repository(**config['repo'])
                 metrics = {}
@@ -242,7 +238,7 @@ class BenchmarkSpec(BaseSettings):
 
                     metrics[metric_name] = Metric(**value)
 
-                if not 'variants' in config:
+                if 'variants' not in config:
                     raise RuntimeError(f"No 'variants' found for {benchmark_name}")
 
                 for variant, run_config in config['variants'].items():
@@ -299,4 +295,3 @@ class BenchmarkSpec(BaseSettings):
                 else:
                     benchmark_specs[framework] = benchmarks
         return benchmark_specs
-

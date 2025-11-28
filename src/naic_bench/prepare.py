@@ -2,18 +2,6 @@ from pathlib import Path
 import subprocess
 import logging
 import os
-import yaml
-from pydantic import BaseModel, Field, computed_field
-from pydantic_settings import BaseSettings, SettingsConfigDict
-import tempfile
-import re
-import math
-import platform
-import site
-import sys
-import time
-import datetime as dt
-import os
 
 from naic_bench.utils import run_command
 from naic_bench.spec import BenchmarkSpec
@@ -82,7 +70,6 @@ class BenchmarkPrepare:
                     if prepare_file in mark_as_run:
                         continue
 
-                    name = Path(prepare_file).stem
                     logger.info(f"BenchmarkPrepare [{category}]: {framework=} {benchmark_name=} -  {prepare_file} {self.data_dir} {self.benchmarks_dir}")
 
                     env = os.environ.copy()
