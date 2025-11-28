@@ -8,14 +8,13 @@ RUN git config --global user.email "roehr@simula.no"
 RUN git config --global user.name "Thomas Roehr"
 
 WORKDIR /naic-workspace/resources/
+RUN git clone https://github.com/2maz/naic-DeepLearningExamples deeplearning-examples
+
+# install naic-bench
 RUN git clone -b main https://github.com/2maz/naic-bench naic-bench
-RUN git clone -b lambda/benchmark https://github.com/2maz/naic-DeepLearningExamples deeplearning-examples
-RUN git clone -b dev https://github.com/2maz/naic-deeplearning-benchmark deeplearning-benchmark
-RUN pip install "slurm-monitor[restapi] @ git+https://github.com/2maz/slurm-monitor"
+RUN python3 -m pip install ./naic-bench
 
 WORKDIR /naic-workspace
-RUN ln -s /naic-workspace/resources/deeplearning-examples/PyTorch benchmark
-RUN cp -R /naic-workspace/resources/deeplearning-benchmark/pytorch/scripts/* .
 
-# prepare all benchmarks
-#RUN /naic-workspace/resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -t all -p
+RUN naic-bench prepare --data-dir /data --benchmarks-dir resources/deeplearning-examples --confd resources/naic-bench/src/naic_bench/resources/conf.d --benchmark gnmt
+RUN naic-bench run --data-dir /data --benchmarks-dir resources/deeplearning-examples --confd resources/naic-bench/src/naic_bench/resources/conf.d --benchmark gnmt --variant fp16 --device-type cuda --gpu-count 1
