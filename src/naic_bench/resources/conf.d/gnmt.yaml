@@ -23,7 +23,7 @@ pytorch:
           math: fp32
           epochs: 2
           seed: 2
-          train-loader-workers: 64
+          train-loader-workers: 32
           save-dir: "{{TMP_DIR}}"
       fp16:
         base_dir: PyTorch/Translation/GNMT
@@ -36,5 +36,5 @@ pytorch:
           math: fp16
           epochs: 2
           seed: 2
-          train-loader-workers: 64
+          train-loader-workers: 32
           save-dir: "{{TMP_DIR}}"
