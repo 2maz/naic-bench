@@ -7,6 +7,7 @@ from logging import basicConfig, getLogger
 from naic_bench.cli.base import BaseParser
 from naic_bench.cli.prepare import PrepareParser
 from naic_bench.cli.run import RunParser
+from naic_bench.cli.show import ShowParser
 
 from naic_bench import __version__
 
@@ -50,6 +51,12 @@ def run():
         subcommand="run",
         help="Run benchmarks",
         parser_klass=RunParser
+    )
+
+    main_parser.attach_subcommand_parser(
+        subcommand="show",
+        help="Show available benchmark specs",
+        parser_klass=ShowParser
     )
 
     args = main_parser.parse_args()
