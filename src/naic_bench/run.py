@@ -10,10 +10,14 @@ import re
 import math
 import platform
 import site
+import selectors
 import sys
 import time
 import datetime as dt
 
+from slurm_monitor.utils.system_info import SystemInfo
+
+from naic_bench.utils import pipe_has_data
 from naic_bench.spec import (
         Repository,
         Metric,
@@ -56,6 +60,8 @@ class BenchmarkRunner:
 
         python_site_packages = python_path.replace(r"bin/python", site_packages)
         python_path = f"{Path(venv_name).resolve()}/{site_packages}:{python_site_packages}"
+
+        python_path = f"{python_path}:{':'.join(site.getsitepackages())}"
         venv = VirtualEnv(name=venv_name, python_path=python_path)
 
         if not Path(venv_name).exists():
@@ -91,13 +97,6 @@ class BenchmarkRunner:
 
         venv = self.prepare_venv(benchmark_name=name, workdir=workdir)
 
-        #env = os.environ.copy()
-        #venv_path = Path(venv_name) / "lib" / f"python{version}" / "site-packages"
-        #if 'PYTHONPATH' in env:
-        #    env["PYTHONPATH"] = f"{venv_path}:{env['PYTHONPATH']}"
-        #else:
-        #    env["PYTHONPATH"] = f"{venv_path}"
-
         metrics = {}
 
         stdout = []
@@ -111,27 +110,26 @@ class BenchmarkRunner:
                     stderr=subprocess.PIPE,
                 ) as process:
 
-            stdout_iter = iter(process.stdout)
-            stderr_iter = iter(process.stderr)
+            stdout_selector = selectors.DefaultSelector()
+            stdout_selector.register(process.stdout, selectors.EVENT_READ)
+
+            stderr_selector = selectors.DefaultSelector()
+            stderr_selector.register(process.stderr, selectors.EVENT_READ)
 
             while process.poll() is None:
-                try:
-                    stdout_line = next(stdout_iter)
+                if pipe_has_data(process.stdout, stdout_selector):
+                    stdout_line = process.stdout.readline()
                     if stdout_line:
                         output_line = stdout_line.decode("UTF-8").strip()
-                        stdout.append(output_line)
                         print(output_line, flush=True, file=sys.stdout)
-                except StopIteration:
-                    pass
+                        stdout.append(output_line)
 
-                try:
-                    stderr_line = next(stderr_iter)
+                if pipe_has_data(process.stderr, stderr_selector):
+                    stderr_line = process.stderr.readline()
                     if stderr_line:
                         output_line = stderr_line.decode("UTF-8").strip()
-                        stderr.append(output_line)
                         print(output_line, flush=True, file=sys.stderr)
-                except StopIteration:
-                    pass
+                        stderr.append(output_line)
 
                 time.sleep(0.1)
             
@@ -159,14 +157,17 @@ class BenchmarkRunner:
             for line in stderr:
                 f.write(f"{line}\n")
         
-        from slurm_monitor.utils.system_info import SystemInfo
         si = SystemInfo()
 
         with open(config.temp_dir / "system_info.yaml", "w") as f:
             data = dict(si)
-            
-            import torch
-            data['software'] = { 'torch': torch.__version__ }
+           
+			try: 
+				import torch
+				data['software'] = { 'torch': torch.__version__ }
+			except LoadError:
+				logger.warn("BenchmarkRunner: failed to check torch version"
+
             yaml.dump(data, f)
 
         report = Report(

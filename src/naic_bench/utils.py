@@ -37,3 +37,12 @@ def run_command(command: list[str], env: dict[str, any] = {}, requires_root: boo
         raise RuntimeError(f"Failed to execute: {cmd} - {error_msg}")
     
     return result.stdout.decode("UTF-8").strip()
+
+def pipe_has_data(pipe, selector) -> bool:
+    """Check if the pipe has data available for reading (Linux/macOS)."""
+    events = selector.select(timeout=0)  # Non-blocking check
+    for key, _ in events:
+        if key.fileobj == pipe:
+            return True
+    return False
+
