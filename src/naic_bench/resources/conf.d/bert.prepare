@@ -1,18 +1,15 @@
 #!/bin/bash
 set -e
 
-DATA_DIR=$(realpath -L ${1:-/data})
-BENCHMARK_DIR=$(realpath -L ${2:-benchmark})
-
 ## ------------------------
 ## PyTorch BERT Squad
 ## ------------------------
 echo "PyTorch BERT Squad"
 pushd .
 mkdir -p $DATA_DIR/squad
-cd $BENCHMARK_DIR/LanguageModeling/BERT$DATA_DIR/squad
+cd $BENCHMARK_DIR
 
-./squad_download.sh $DATA_DIR/squad
+./data/squad/squad_download.sh $DATA_DIR/squad
 popd
 chmod -R a+rwx $DATA_DIR/squad
 
