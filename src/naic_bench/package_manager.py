@@ -1,14 +1,19 @@
 from abc import ABC, abstractmethod
 from naic_bench.utils import Command
 from pathlib import Path
+from enum import Enum
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 class PackageManager(ABC):
+    class Identifier(str, Enum):
+        APT = 'apt'
+        DNF = 'dnf'
+
     @property
-    def identifier(self):
+    def identifier(self) -> Identifier:
         raise RuntimeError("Please implement 'def identifier' for the PackageManager")
 
     @abstractmethod
@@ -23,7 +28,7 @@ class PackageManager(ABC):
     def install(self) -> bool:
         pass
 
-    def ensure_packages(self, packages: dict[str, list[str]]) -> bool:
+    def ensure_packages(self, packages: dict[Identifier, list[str]]) -> bool:
         if self.identifier in packages:
             prerequisites = packages[self.identifier]
 
@@ -31,8 +36,8 @@ class PackageManager(ABC):
 
 class AptPackageManager(PackageManager):
     @property
-    def identifier(self):
-        return "apt"
+    def identifier(self) -> PackageManager.Identifier:
+        return PackageManager.Identifier.APT
 
     def installed(self, pkg_name: str) -> bool:
         cmd = [ "dpkg-query", "-W", "-f='${Status}'", pkg_name ]
@@ -59,8 +64,8 @@ class AptPackageManager(PackageManager):
 
 class DNFPackageManager(PackageManager):
     @property
-    def identifier(self):
-        return "dnf"
+    def identifier(self) -> PackageManager.Identifier:
+        return PackageManager.Identifier.DNF
 
     def installed(self, pkg_name: str) -> bool:
         try:

@@ -3,6 +3,11 @@ pytorch:
     repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
       branch: lambda/benchmark
+    osdeps:
+      apt:
+        python3-venv
+      dnf:
+        python3-venv
     prepare:
       data: bert.prepare
     command: >

@@ -4,13 +4,16 @@ import logging
 import os
 
 from naic_bench.spec import BenchmarkSpec
-from naic_bench.package_manager import PackageManagerFactory
+from naic_bench.package_manager import (
+    PackageManager,
+    PackageManagerFactory
+)
 
 logger = logging.getLogger(__name__)
 
 # Define apt packages
 PREREQUISITES = {
-    'apt': [
+    PackageManager.Identifier.APT: [
         "curl",
         "g++",
         "git",
@@ -20,7 +23,7 @@ PREREQUISITES = {
         "unzip",
         "wget"
     ],
-    'dnf': [
+    PackageManager.Identifier.DNF: [
         "curl",
         "g++",
         "git",

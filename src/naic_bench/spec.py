@@ -12,6 +12,8 @@ import re
 import math
 import platform
 
+from naic_bench.package_manager import PackageManager
+
 logger = logging.getLogger(__name__)
 
 BENCHMARK_SPEC_SUFFIX = ".yaml"
@@ -119,6 +121,8 @@ class BenchmarkSpec(BaseSettings):
 
     repo: Repository
 
+    # list of os dependencies, by identifier of package manager, e.g. 'apt', 'dnf'
+    osdeps: dict[PackageManager.Identifier, list[str]] = Field(default={})
     prepare: dict[str, list[str]] = Field(default={})
     metrics: dict[str, Metric] = Field(default={})
 
