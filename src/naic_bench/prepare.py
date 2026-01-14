@@ -3,18 +3,34 @@ import subprocess
 import logging
 import os
 
-from naic_bench.utils import run_command
 from naic_bench.spec import BenchmarkSpec
+from naic_bench.package_manager import PackageManagerFactory
 
 logger = logging.getLogger(__name__)
 
-PREREQUISITES = [
-    "curl",
-    "git",
-    "python3",
-    "unzip",
-    "wget"
-]
+# Define apt packages
+PREREQUISITES = {
+    'apt': [
+        "curl",
+        "g++",
+        "git",
+        "python3",
+        "python3-dev",
+        "python3-venv",
+        "unzip",
+        "wget"
+    ],
+    'dnf': [
+        "curl",
+        "g++",
+        "git",
+        "python3",
+        "python3-devel",
+        "python3-venv"
+        "unzip",
+        "wget"
+    ]
+}
 
 class BenchmarkPrepare:
     data_dir: Path
@@ -32,26 +48,8 @@ class BenchmarkPrepare:
 
     @classmethod
     def install_prerequisites(cls):
-        install_pkgs = []
-        for pkg in PREREQUISITES:
-            cmd = [ "dpkg-query", "-W", "-f='${Status}'", pkg ]
-            result = run_command(cmd, requires_root=False)
-            if "install ok installed" not in result:
-                install_pkgs.append(pkg)
-
-        cmd = [ "python3", "-m", "venv", "--help" ]
-        result = run_command(cmd, requires_root=False)
-        if not result.startswith("usage"):
-            install_pkgs.append("python3-venv")
-
-        if install_pkgs:
-            env = { "DEBIAN_FRONTEND": "noninteractive" }
-
-            cmd = ["apt", "update"]
-            result = run_command(cmd, env=env)
-
-            cmd = ["apt", "install", "-y", "--quiet"] + install_pkgs
-            result = run_command(cmd, env=env)
+        package_manager = PackageManagerFactory.get_instance()
+        package_manager.ensure_packages(PREREQUISITES)
 
     def prepare(self, benchmark_names: list[str] | None = None):
         benchmarks = BenchmarkSpec.all_as_list(confd_dir=self.confd_dir, data_dir=self.data_dir)
