@@ -36,7 +36,12 @@ class ShowParser(BaseParser):
                         data_dir=args.data_dir
                     )
 
-        for b in args.benchmark:
+        if not args.benchmark:
+            benchmarks_pattern = [".*"]
+        else:
+            benchmarks_pattern = args.benchmark
+
+        for b in benchmarks_pattern:
             pattern = re.compile(f"{b}")
 
             for framework, benchmark_name, variant, benchmark_spec in benchmarks:
