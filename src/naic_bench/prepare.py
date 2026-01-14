@@ -42,9 +42,9 @@ class BenchmarkPrepare:
             benchmarks_dir: Path | str,
             confd_dir: Path | str
             ):
-        self.data_dir = Path(data_dir)
-        self.benchmarks_dir = Path(benchmarks_dir)
-        self.confd_dir = Path(confd_dir)
+        self.data_dir = Path(data_dir).resolve()
+        self.benchmarks_dir = Path(benchmarks_dir).resolve()
+        self.confd_dir = Path(confd_dir).resolve()
 
     @classmethod
     def install_prerequisites(cls):
@@ -69,6 +69,12 @@ class BenchmarkPrepare:
                         continue
 
                     logger.info(f"BenchmarkPrepare [{category}]: {framework=} {benchmark_name=} -  {prepare_file} {self.data_dir} {self.benchmarks_dir}")
+
+                    if not self.benchmarks_dir.exists():
+                        logger.info("Cloning: {benchmark_spec.repo.url} branch={benchmark_spec.repo.branch} into {self.benchmarks_dir}")
+                        Repo.clone_from(benchmark_spec.repo.url,
+                                        branch=benchmark_spec.repo.branch,
+                                        to_path=self.benchmarks_dir)
 
                     env = os.environ.copy()
                     env['DATA_DIR'] = benchmark_spec.data_dir
