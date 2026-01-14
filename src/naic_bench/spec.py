@@ -299,3 +299,11 @@ class BenchmarkSpec(BaseSettings):
                 else:
                     benchmark_specs[framework] = benchmarks
         return benchmark_specs
+
+    def git_target_dir(self, prefix_path: Path | str):
+        url_txt = re.sub(r"[/(&:,;. ]",'_', self.repo.url)
+        if self.repo.branch:
+            branch_txt = re.sub(r"[/(&:,;. ]",'_', self.repo.branch)
+            url_txt += f"__{branch_txt}"
+
+        return Path(prefix_path) / url_txt

@@ -2,6 +2,7 @@ from pathlib import Path
 import subprocess
 import logging
 import os
+from git import Repo
 
 from naic_bench.spec import BenchmarkSpec
 from naic_bench.package_manager import (
@@ -74,15 +75,16 @@ class BenchmarkPrepare:
                     logger.info(f"BenchmarkPrepare [{category}]: {framework=} {benchmark_name=} -  {prepare_file} {self.data_dir} {self.benchmarks_dir}")
 
                     if not self.benchmarks_dir.exists():
-                        logger.info("Cloning: {benchmark_spec.repo.url} branch={benchmark_spec.repo.branch} into {self.benchmarks_dir}")
+                        clone_target_path = benchmark_spec.git_target_dir(self.benchmarks_dir)
+                        logger.info("Cloning: {benchmark_spec.repo.url} branch={benchmark_spec.repo.branch} into {clone_target_path}")
                         Repo.clone_from(benchmark_spec.repo.url,
                                         branch=benchmark_spec.repo.branch,
-                                        to_path=self.benchmarks_dir)
+                                        to_path=clone_target_path)
 
                     env = os.environ.copy()
                     env['DATA_DIR'] = benchmark_spec.data_dir
                     env['TMP_DIR'] = benchmark_spec.temp_dir
-                    env['BENCHMARK_DIR'] = Path(self.benchmarks_dir) / benchmark_spec.base_dir
+                    env['BENCHMARK_DIR'] = clone_target_path / benchmark_spec.base_dir
 
                     subprocess.run([prepare_file, self.data_dir, self.benchmarks_dir], env=env)
                     mark_as_run.add(prepare_file)

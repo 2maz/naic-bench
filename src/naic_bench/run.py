@@ -82,7 +82,8 @@ class BenchmarkRunner:
         config = self.benchmark_specs[framework][name][variant]
         config.expand_placeholders(GPU_COUNT=gpu_count)
 
-        workdir = self.benchmarks_dir / config.base_dir
+        clone_target_path = config.git_target_dir(self.benchmarks_dir)
+        workdir = clone_target_path / config.base_dir
 
         cmd = config.get_command(device_type=device_type, gpu_count=gpu_count)
         logger.info(f"Execute: {cmd} in {workdir}")
