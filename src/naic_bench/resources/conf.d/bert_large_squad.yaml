@@ -1,8 +1,8 @@
 pytorch:
   bert_large_squad:
-    repo: 
+    repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
-    prepare: 
+    prepare:
       data: bert.prepare
     environment:
       NCCL_P2P_DISABLE: 1

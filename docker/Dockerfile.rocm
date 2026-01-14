@@ -19,7 +19,3 @@ RUN cp -R /naic-workspace/resources/deeplearning-benchmark/pytorch/scripts/* .
 
 # prepare all benchmarks
 #RUN /naic-workspace/resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -t all -p
-
-
-
-

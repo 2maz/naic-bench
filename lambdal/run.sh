@@ -40,7 +40,7 @@ while getopts "hib:d:w:" option; do
             export DATA_DIR
             ;;
         i)
-            DOCKER_INTERACTIVE="-it" 
+            DOCKER_INTERACTIVE="-it"
             export DOCKER_INTERACTIVE
             ;;
         h)
@@ -80,7 +80,7 @@ function user_command() {
 }
 
 ## BEGIN MAIN
-module load docker 
+module load docker
 
 if ! command -v slurm-monitor; then
     if [ -d venv-$ARCH-slurm-monitor ]; then

@@ -25,7 +25,3 @@ ENV PYTORCH_JIT 0
 
 # prepare all benchmarks needs to be done separately
 # RUN /naic-workspace/resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -t all -p
-
-
-
-

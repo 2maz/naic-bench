@@ -1,6 +1,6 @@
 pytorch:
   ssd:
-    repo: 
+    repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
     command: >
       python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} main.py --mode benchmark-training

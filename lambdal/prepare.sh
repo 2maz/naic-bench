@@ -1,4 +1,4 @@
-# This script will prepare the data folder and download all required 
+# This script will prepare the data folder and download all required
 # data elements
 
 export NAME_NGC=pytorch:24.10-py3

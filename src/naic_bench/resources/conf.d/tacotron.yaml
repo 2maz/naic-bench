@@ -1,6 +1,6 @@
 pytorch:
   tacotron:
-    repo: 
+    repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
     command: >
       python -m multiproc {{GPU_COUNT}} train.py

@@ -1,6 +1,6 @@
 pytorch:
   gnmt:
-    repo: 
+    repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
     prepare:
       data: gnmt.prepare

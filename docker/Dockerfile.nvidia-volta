@@ -16,7 +16,7 @@ WORKDIR /naic-workspace
 RUN ln -s /naic-workspace/resources/deeplearning-examples/PyTorch benchmark
 RUN cp -R /naic-workspace/resources/deeplearning-benchmark/pytorch/scripts/* .
 
-# PREPARE PYTHON FROM SOURCE TO SUPPORT OLDER 
+# PREPARE PYTHON FROM SOURCE TO SUPPORT OLDER
 RUN mv /opt/pytorch/pytorch /opt/pytorch/pytorch.old
 RUN git clone https://github.com/pytorch/pytorch /opt/pytorch/pytorch
 

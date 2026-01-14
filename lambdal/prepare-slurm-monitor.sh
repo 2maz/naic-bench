@@ -12,4 +12,3 @@ else
 fi
 
 . venv-$ARCH-slurm-monitor/bin/activate
-

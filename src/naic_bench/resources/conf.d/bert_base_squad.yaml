@@ -1,9 +1,9 @@
 pytorch:
   bert_base_squad:
-    repo: 
+    repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
       branch: lambda/benchmark
-    prepare: 
+    prepare:
       data: bert.prepare
     command: >
       python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} run_squad.py

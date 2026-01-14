@@ -16,7 +16,7 @@ class ShowParser(BaseParser):
         parser.add_argument("--confd-dir", default="./conf.d", type=str)
         parser.add_argument("--data-dir", required=False, default="$NAIC_BENCH_DATA_DIR", type=str)
 
-        parser.add_argument("--benchmark", 
+        parser.add_argument("--benchmark",
             nargs="+",
             type=str,
             help="Name(s) or patterns of benchmarks"

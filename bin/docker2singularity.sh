@@ -29,7 +29,7 @@ function docker_build {
         echo "Failed to locate $SCRIPT_DIR/docker/Dockerfile.$suffix"
         exit 10
     fi
-    
+
     echo >&2 "Building docker image for $suffix-$ARCH"
     DOCKER_IMAGE_NAME=naic/benchmark-$suffix-$ARCH
     docker build --no-cache -t $DOCKER_IMAGE_NAME -f $SCRIPT_DIR/docker/Dockerfile.$suffix .
@@ -61,7 +61,7 @@ function singularity_build {
     TAR_FILE="$SCRIPT_DIR/images/naic-benchmark-$suffix-$ARCH.tar"
     SIF_FILE="$SCRIPT_DIR/images/naic-benchmark.$suffix-$ARCH.sif"
 
-    if [ -e $TAR_FILE ]; then 
+    if [ -e $TAR_FILE ]; then
         rm $TAR_FILE
     fi
 
@@ -76,7 +76,7 @@ function singularity_build {
     singularity build $SIF_FILE docker-archive://$TAR_FILE
 
     echo >&2 "Cleaning up $TAR_FILE"
-    rm $TAR_FILE 
+    rm $TAR_FILE
 }
 
 while getopts "hc:dps" option; do
@@ -132,4 +132,3 @@ if [ -n "$BUILD_SINGULARITY" ]; then
         echo "    singularity shell -B $DATA_DIR:/data --nv naic-benchmark.$COMPUTE_PLATFORM-$ARCH.sif"
     fi
 fi
-

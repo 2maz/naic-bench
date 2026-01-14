@@ -58,4 +58,3 @@ if [ -z "$DEVICE_MODEL" ]; then
 fi
 
 singularity exec -B $NAIC_DATA_DIR:/data $EXTRA_ARGS $SIF_IMAGE_NAME bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d $DEVICE_MODEL -n $GPU_COUNT -o $NAIC_BENCH_LOGS_DIR -l ex3"
-

@@ -61,11 +61,11 @@ while getopts "hd:t:prw:n:o:l:" option; do
             exit 30
         fi
         export GPU_COUNT=$DESIRED_GPU_COUNT
-        ;;	
+        ;;
     o)
         export RESULTS_DIR=$OPTARG
         ;;
-    p)  
+    p)
         export PREPARE_BENCHMARK_ONLY=1
         ;;
     r)
@@ -160,4 +160,3 @@ if [ ! -e "run_benchmark.sh" ]; then
 fi
 
 ./run_benchmark.sh ${NAME_TYPE}_${GPU_COUNT}x${GPU_NAME}_${NODE} ${NAME_TASKS} $TIMEOUT_IN_S
-

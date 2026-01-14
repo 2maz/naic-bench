@@ -2,8 +2,8 @@
 
 ## Installation
 
-This installation relies on the usage of Nvidia containers. 
-So you will have to setup an account to get access the container residing 
+This installation relies on the usage of Nvidia containers.
+So you will have to setup an account to get access the container residing
 at nvcr.io.
 
 To setup the benchmark and download the required datasets:

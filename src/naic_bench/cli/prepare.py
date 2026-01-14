@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 import logging
-import re
 
 from naic_bench.cli.base import BaseParser
 from naic_bench.prepare import BenchmarkPrepare
@@ -32,4 +31,3 @@ class PrepareParser(BaseParser):
         bp.install_prerequisites()
 
         bp.prepare(args.benchmark)
-

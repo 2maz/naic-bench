@@ -11,4 +11,3 @@ df[numeric_columns] = scaler.fit_transform(df[numeric_columns])
 df = df.rename(columns={"Unnamed: 0": "name"})
 
 print(df.to_json(orient='records', indent=2))
-

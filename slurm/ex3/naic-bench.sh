@@ -27,4 +27,3 @@ sed -i "0,/GPU_COUNT/s#GPU_COUNT#$GPU_COUNT#" generated/naic-bench-$NODENAME.sh
 sed -i "s#GPU_TYPE=.*#GPU_TYPE=\${1:-$GPU_TYPE}#g" generated/naic-bench-$NODENAME.sh
 
 echo "Generated SLURM Script: generated/naic-bench-$NODENAME.sh"
-
