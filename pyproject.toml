@@ -31,6 +31,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "docker",
     "GitPython",
     "numpy",
     "pandas",
@@ -73,6 +74,7 @@ test = [
 
 [project.scripts]
 naic-bench = "naic_bench.cli.main:run"
+naic-bench-docker = "naic_bench.cli.docker:run"
 
 [tool.mypy]
 ignore_missing_imports = true

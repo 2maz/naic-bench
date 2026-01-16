@@ -9,6 +9,7 @@ from naic_bench.cli.prepare import PrepareParser
 from naic_bench.cli.run import RunParser
 from naic_bench.cli.show import ShowParser
 
+
 from naic_bench import __version__
 
 logger = getLogger(__name__)

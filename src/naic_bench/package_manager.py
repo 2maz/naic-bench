@@ -42,7 +42,7 @@ class AptPackageManager(PackageManager):
     def installed(self, pkg_name: str) -> bool:
         cmd = [ "dpkg-query", "-W", "-f='${Status}'", pkg_name ]
         try:
-            result = Command.run(cmd, requires_root=False)
+            result = Command.run(cmd)
             return "install ok installed" in result
         except RuntimeError:
             return False
@@ -52,7 +52,7 @@ class AptPackageManager(PackageManager):
         env = { "DEBIAN_FRONTEND": "noninteractive" }
 
         cmd = ["apt", "update"]
-        return Command.run(cmd, env=env)
+        return Command.run(cmd, env=env, requires_root=True)
 
     def install(self, pkgs: list[str]) -> str:
         env = { "DEBIAN_FRONTEND": "noninteractive" }
@@ -60,7 +60,7 @@ class AptPackageManager(PackageManager):
         self.update()
 
         cmd = ["apt", "install", "-y", "--quiet"] + pkgs
-        return Command.run(cmd, env=env)
+        return Command.run(cmd, env=env, requires_root=True)
 
 class DNFPackageManager(PackageManager):
     @property
@@ -77,11 +77,11 @@ class DNFPackageManager(PackageManager):
 
     def update(self) -> str:
         cmd = ["dnf", "update", "-y"]
-        return Command.run(cmd)
+        return Command.run(cmd, requires_root=True)
 
     def install(self, pkgs: list[str]) -> str:
         cmd = ["dnf", "install", "-y"] + pkgs
-        return Command.run(cmd)
+        return Command.run(cmd, requires_root=True)
 
 class PackageManagerFactory:
     @classmethod

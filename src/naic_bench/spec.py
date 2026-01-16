@@ -126,9 +126,9 @@ class BenchmarkSpec(BaseSettings):
     prepare: dict[str, list[str]] = Field(default={})
     metrics: dict[str, Metric] = Field(default={})
 
-    environment: dict[str, any] = Field(default={})
+    environment: dict[str, str | int | float] = Field(default={})
     batch_size: BatchSize
-    arguments: dict[str, any] = Field(default={})
+    arguments: dict[str, str | int | float] = Field(default={})
 
     data_dir: str | None = Field(default=None)
 
