@@ -24,7 +24,7 @@ logger.setLevel(logging.INFO)
 # Dockerfile.<devicetype>
 
 DOCKER_DEFAULT_ARGS = [
-  "--rm",
+  #"--rm",
   "--shm-size", "64g",
   #"--cpus, "{{CPU_COUNT}}"
 ]
@@ -199,6 +199,7 @@ def run():
         docker_run = ["docker", "run", "-d", "--name", args.container]
         if args.data_dir:
             docker_run += ["-v", f"{Path(args.data_dir).resolve()}:/data"]
+        docker_run += DOCKER_DEFAULT_ARGS
 
         docker_run += Docker.device_specific_args(device_type)
         docker_run += [image_name]
