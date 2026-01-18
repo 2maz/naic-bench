@@ -86,8 +86,8 @@ class BenchmarkRunner:
         venv = self.prepare_venv(benchmark_name=name, workdir=workdir)
 
         logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: . {venv.name}/bin/activate; cd {workdir}; PYTHONPATH={venv.python_path} {cmd}")
-        result = Command.run_with_process(
-                    f". {venv.name}/bin/activate; cd {workdir}; PYTHONPATH={venv.python_path} {cmd}",
+        result = Command.run_with_progress(
+                    [f". {venv.name}/bin/activate; cd {workdir}; PYTHONPATH={venv.python_path} {cmd}"],
                     shell=True
                  )
 

@@ -65,7 +65,7 @@ class Command:
 
     @classmethod
     def run_with_progress(cls,
-                          command: list[str] | str,
+                          command: list[str],
                           env: dict[str, any] = {},
                           shell: bool = False,
                           requires_root: bool = False) -> ExecutionResult:
@@ -90,8 +90,12 @@ class Command:
 
         stdout = []
         stderr = []
+
+        if shell and type(cmd) is list[str]:
+            cmd = ' '.join(cmd)
+
         with subprocess.Popen(
-                    cmd,
+                    args=cmd,
                     shell=shell,
                     env=environ,
                     stdout=subprocess.PIPE,
