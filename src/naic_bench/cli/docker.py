@@ -206,16 +206,20 @@ def run():
 
         Command.run_with_progress(docker_run)
 
-    container = docker.container(args.container)
-    mounts = container.attrs["Mounts"]
-    if mounts:
-        print("    mounted:")
-        [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
-    print()
 
-    docker_exec = ["docker", "exec", args.container]
-    docker_exec += exec_args
-    Command.run_with_progress(docker_exec)
+    if exec_args:
+        container = docker.container(args.container)
+        mounts = container.attrs["Mounts"]
+        if mounts:
+            print("    mounted:")
+            [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
+        print()
+
+        docker_exec = ["docker", "exec", args.container]
+        docker_exec += exec_args
+        Command.run_with_progress(docker_exec)
+    else:
+        print("No command provide to execute in docker: if required append '-- <command>'")
 
 if __name__ == "__main__":
     run()
