@@ -9,13 +9,6 @@ RUN git config --global user.name "Thomas Roehr"
 
 WORKDIR /naic-workspace/resources/
 RUN git clone -b main https://github.com/2maz/naic-bench naic-bench
-RUN git clone -b lambda/benchmark https://github.com/2maz/naic-DeepLearningExamples deeplearning-examples
-RUN git clone -b dev https://github.com/2maz/naic-deeplearning-benchmark deeplearning-benchmark
-RUN pip install "slurm-monitor[restapi] @ git+https://github.com/2maz/slurm-monitor"
+RUN pip install -e ./naic-bench
 
 WORKDIR /naic-workspace
-RUN ln -s /naic-workspace/resources/deeplearning-examples/PyTorch benchmark
-RUN cp -R /naic-workspace/resources/deeplearning-benchmark/pytorch/scripts/* .
-
-# prepare all benchmarks
-#RUN /naic-workspace/resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -t all -p

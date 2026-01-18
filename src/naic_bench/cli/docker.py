@@ -74,7 +74,7 @@ class Docker:
                 docker_args = ["--gpus", f"device='\"{','.join(uuids)}\"'"]
             else:
                 docker_args += ["-e", f"CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']}"]
-        else:
+        elif device_type not in ["xpu"]:
             docker_args += ["--gpus", "all"]
 
         if "HABANA_VISIBLE_DEVICES" in env:
@@ -91,12 +91,12 @@ class Docker:
         docker_args = cls.device_setup_args(device_type)
         available_types = sorted(DOCKER_DEVICE_TYPE_ARGS.keys())
         if device_type in available_types:
-            docker_args.update(DOCKER_DEVICE_TYPE_ARGS[device_type])
+            docker_args += DOCKER_DEVICE_TYPE_ARGS[device_type]
             return docker_args
 
         for docker_type in sorted(DOCKER_DEVICE_TYPE_ARGS.keys()):
             if device_type.startswith(docker_type):
-                docker_args.update(DOCKER_DEVICE_TYPE_ARGS[device_type])
+                docker_args += DOCKER_DEVICE_TYPE_ARGS[device_type]
 
         return docker_args
 
