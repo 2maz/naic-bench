@@ -44,8 +44,13 @@ class Repository(BaseModel):
             subprocess.Popen(["git", "reset", "--hard", self.commit], cwd=repo_dir)
 
 class VirtualEnv(BaseModel):
-    name: str
     python_path: str
+    path: Path
+
+    @computed_field
+    @property
+    def name(self) -> str:
+        return self.path.name
 
 class Metric(BaseModel):
     name: str

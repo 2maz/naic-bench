@@ -34,11 +34,11 @@ class BenchmarkRunner:
 
         self.load_all()
 
-    def prepare_venv(self, benchmark_name: str, workdir: Path | str) -> str:
+    def prepare_venv(self, benchmark_name: str, benchmark_dir: Path | str, work_dir: Path | str = Path().resolve()) -> str:
         """
         Prepare venv and return python path setting
         """
-        venv_name = f"venv-{benchmark_name}-{platform.machine()}"
+        venv_path = (work_dir / f"venv-{benchmark_name}-{platform.machine()}").resolve()
 
         # plain execution of the benchmark
         result = subprocess.run(["which", "python"], stdout=subprocess.PIPE)
@@ -47,22 +47,24 @@ class BenchmarkRunner:
         site_packages = "lib/python" + version + "/site-packages"
 
         python_site_packages = python_path.replace(r"bin/python", site_packages)
-        python_path = f"{Path(venv_name).resolve()}/{site_packages}:{python_site_packages}"
+        python_path = f"{Path(venv_path).resolve()}/{site_packages}:{python_site_packages}"
 
         python_path = f"{python_path}:{':'.join(site.getsitepackages())}"
-        venv = VirtualEnv(name=venv_name, python_path=python_path)
+        venv = VirtualEnv(path=venv_path, python_path=python_path)
 
-        if not Path(venv_name).exists():
-            logger.info(f"BenchmarkRunner[{benchmark_name}]: preparing venv: {venv_name}")
-            subprocess.run(["python3", "-m", "venv", venv_name],
+        if not venv.path.exists():
+            logger.info(f"BenchmarkRunner[{benchmark_name}]: preparing venv: {venv.name}")
+            result = subprocess.run(["python3", "-m", "venv", venv.path],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
+            if result.returncode != 0:
+                raise RuntimeError(f"BenchmarkRunner[{benchmark_name}]: preparing venv: {venv.name} failed")
 
-            requirements_txt = workdir / "requirements.txt"
+            requirements_txt = benchmark_dir / "requirements.txt"
             if requirements_txt.exists():
-                subprocess.run(f". {venv_name}/bin/activate; PYTHONPATH={venv.python_path} pip install -r {requirements_txt}", shell=True)
+                subprocess.run(f". {venv.path}/bin/activate; PYTHONPATH={venv.python_path} pip install -r {requirements_txt}", shell=True)
         else:
-            logger.info(f"BenchmarkRunner[{benchmark_name}]: venv: {venv_name} already exists")
+            logger.info(f"BenchmarkRunner[{benchmark_name}]: venv: {venv.name} already exists")
         return venv
 
     def load_all(self):
@@ -82,16 +84,16 @@ class BenchmarkRunner:
             config.expand_placeholders(CPU_COUNT=cpu_count)
 
         clone_target_path = config.git_target_dir(self.benchmarks_dir)
-        workdir = clone_target_path / config.base_dir
+        benchmark_dir = clone_target_path / config.base_dir
 
         cmd = config.get_command(device_type=device_type, gpu_count=gpu_count)
-        logger.info(f"Execute: {cmd} in {workdir}")
+        logger.info(f"Execute: {cmd} in {benchmark_dir=}")
 
-        venv = self.prepare_venv(benchmark_name=name, workdir=workdir)
+        venv = self.prepare_venv(benchmark_name=name, benchmark_dir=benchmark_dir)
 
-        logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: . {venv.name}/bin/activate; cd {workdir}; PYTHONPATH={venv.python_path} {cmd}")
+        logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: . {venv.name}/bin/activate; cd {benchmark_dir}; PYTHONPATH={venv.python_path} {cmd}")
         result = Command.run_with_progress(
-                    [f". {venv.name}/bin/activate; cd {workdir}; PYTHONPATH={venv.python_path} {cmd}"],
+                    [f". {venv.path}/bin/activate; cd {benchmark_dir}; PYTHONPATH={venv.python_path} {cmd}"],
                     shell=True
                  )
 
