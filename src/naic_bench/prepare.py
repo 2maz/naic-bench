@@ -74,8 +74,8 @@ class BenchmarkPrepare:
 
                     logger.info(f"BenchmarkPrepare [{category}]: {framework=} {benchmark_name=} -  {prepare_file} {self.data_dir} {self.benchmarks_dir}")
 
-                    if not self.benchmarks_dir.exists():
-                        clone_target_path = benchmark_spec.git_target_dir(self.benchmarks_dir)
+                    clone_target_path = benchmark_spec.git_target_dir(self.benchmarks_dir)
+                    if not clone_target_path.exists():
                         logger.info("Cloning: {benchmark_spec.repo.url} branch={benchmark_spec.repo.branch} into {clone_target_path}")
                         Repo.clone_from(benchmark_spec.repo.url,
                                         branch=benchmark_spec.repo.branch,
