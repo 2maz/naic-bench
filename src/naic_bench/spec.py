@@ -5,8 +5,10 @@ import subprocess
 import logging
 import os
 import yaml
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, SkipValidation
 from pydantic_settings import BaseSettings
+from typing import Any
+from typing_extensions import Annotated
 import tempfile
 import re
 import math
@@ -126,9 +128,9 @@ class BenchmarkSpec(BaseSettings):
     prepare: dict[str, list[str]] = Field(default={})
     metrics: dict[str, Metric] = Field(default={})
 
-    environment: dict[str, str | int | float] = Field(default={})
+    environment: dict[str, str | int] = Field(default={})
     batch_size: BatchSize
-    arguments: dict[str, str | int | float] = Field(default={})
+    arguments: dict[str, Annotated[Any, SkipValidation]] = Field(default={})
 
     data_dir: str | None = Field(default=None)
 
