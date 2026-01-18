@@ -3,11 +3,11 @@ from docker import from_env
 import logging
 from logging import basicConfig, getLogger
 
-
 from naic_bench.utils import Command
 from pathlib import Path
 import platform
 import os
+import sys
 
 
 logger = getLogger(__name__)
@@ -103,12 +103,19 @@ class Docker:
         """
         Retrieve container or none if is does not exist
         """
-        for x in self.client.containers.list():
+        for x in self.client.containers.list(all=True, filters={'name': name}):
             if x.name == name:
                 return x
 
         return None
 
+    def image(self, name: str):
+        for x in self.client.images.list(all=True):
+            for tag in x.tags:
+                if tag.startswith(name):
+                    return x
+
+        return None
 
     @classmethod
     def container_uuid(cls, name: str) -> str | None:
@@ -133,6 +140,9 @@ def run():
     )
 
     parser = ArgumentParser(description="naic-bench in docker")
+    parser.add_argument("--rebuild", action="store_true", default=False)
+    parser.add_argument("--restart", action="store_true", default=False)
+
     parser.add_argument("--device-type", required=True, type=str, default=None)
     parser.add_argument("--container", required=True, type=str, default=None)
     parser.add_argument("--data-dir", type=str, default=None)
@@ -150,16 +160,40 @@ def run():
     if not dockerfile.exists():
         raise RuntimeError(f"Dockerfile {dockerfile} not found")
 
-    docker = Docker()
-    container = docker.container(args.container)
-    if container and container.status == "running":
-        print(f"Container {args.container} exists (reusing)")
-    elif container and not container.status == "running":
-        print(f"Container {args.container} exists - but status={container.status}")
-        print(f"Please remove the container first: docker rm {args.container}")
-    else:
-        Command.run_with_progress(["docker", "build", "-t", image_name, "-f", str(dockerfile), "."])
+    build = False
+    start = False
 
+    docker = Docker()
+    image = docker.image(image_name)
+    container = docker.container(args.container)
+
+    if not image:
+        build = True
+        start = True
+    elif not container:
+        start = True
+    elif args.rebuild:
+        logger.info(f"docker: rebuild requested - stopping and removing container '{container.name}'")
+        container.stop()
+        container.remove()
+        build = True
+        start = True
+    elif args.restart:
+        logger.info(f"docker: restart requested - stopping and removing container '{container.name}'")
+        container.stop()
+        container.remove()
+        start = True
+    elif container.status == "running":
+        print(f"Docker container '{args.container}' exists - reusing")
+    elif not container.status == "running":
+        print(f"Container {args.container} exists - but status={container.status}")
+        print(f"Please remove the container first: docker rm {args.container} or call with --restart")
+        sys.exit(10)
+
+    if build:
+        Command.run_with_progress(["docker", "build", "--no-cache", "-t", image_name, "-f", str(dockerfile), "."])
+
+    if start:
         # start the container with the correct mounted volumes
         docker_run = ["docker", "run", "-d", "--name", args.container]
         if args.data_dir:
@@ -170,6 +204,13 @@ def run():
         docker_run += ["tail", "-f", "/dev/null"]
 
         Command.run_with_progress(docker_run)
+
+    container = docker.container(args.container)
+    mounts = container.attrs["Mounts"]
+    if mounts:
+        print("    mounted:")
+        [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
+    print()
 
     docker_exec = ["docker", "exec", args.container]
     docker_exec += exec_args
