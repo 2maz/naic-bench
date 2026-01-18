@@ -4,7 +4,7 @@ FROM intel/intel-extension-for-pytorch:2.8.10-xpu
 #     xpu-smi: error while loading shared libraries: libmetee.so.4.3.0: cannot open shared object file: No such file or directory
 
 RUN apt update && apt upgrade -y
-RUN apt install -y bc vim git
+RUN apt install -y bc vim git python3.11-venv
 
 RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
 RUN echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy unified" | sudo tee /etc/apt/sources.list.d/intel-gpu-jammy.list
