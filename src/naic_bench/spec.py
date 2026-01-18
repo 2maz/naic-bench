@@ -119,6 +119,7 @@ class BenchmarkSpec(BaseSettings):
     name: str
     variant: str
     command: str
+    command_distributed: str
     base_dir: str
 
     repo: Repository
@@ -152,6 +153,7 @@ class BenchmarkSpec(BaseSettings):
                 else:
                     updated_arguments[argument_name] = re.sub(pattern, str(v), argument_value)
             self.command = re.sub(pattern, str(v), self.command)
+            self.command_distributed = re.sub(pattern, str(v), self.command_distributed)
             self.arguments = updated_arguments
 
     def device_arguments(self, device_type: str | None = None):
@@ -236,6 +238,8 @@ class BenchmarkSpec(BaseSettings):
                     raise RuntimeError(f"Fields '{','.join(missing_fields)}' missing in run configuration of {benchmark_name}")
 
                 command = config['command']
+                command_distributed = config['command_distributed']
+
                 repo = Repository(**config['repo'])
                 metrics = {}
                 for metric_name, metric_spec in config['metrics'].items():
@@ -261,6 +265,7 @@ class BenchmarkSpec(BaseSettings):
                     run_config['name'] = benchmark_name
                     run_config['variant'] = variant
                     run_config['command'] = command
+                    run_config['command_distributed'] = command_distributed
                     run_config['repo'] = repo
                     run_config['metrics'] = metrics
 

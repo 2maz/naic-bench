@@ -3,6 +3,8 @@ pytorch:
     repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
     command: >
+      python ncf.py
+    command_distributed: >
       python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} ncf.py
     prepare:
       data: ncf

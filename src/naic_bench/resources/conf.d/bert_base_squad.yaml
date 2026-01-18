@@ -11,6 +11,8 @@ pytorch:
     prepare:
       data: bert.prepare
     command: >
+      python run_squad.py
+    command_distributed: >
       python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} run_squad.py
     metrics:
       throughput:

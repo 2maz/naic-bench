@@ -5,6 +5,8 @@ pytorch:
     prepare:
       data: gnmt.prepare
     command: >
+      python train.py
+    command_distributed: >
       python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} train.py
     metrics:
       throughput:

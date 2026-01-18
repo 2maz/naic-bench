@@ -7,6 +7,8 @@ pytorch:
     environment:
       NCCL_P2P_DISABLE: 1
     command: >
+      python run_squad.py
+    command_distributed: >
       python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} run_squad.py
     metrics:
       throughput:
