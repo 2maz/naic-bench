@@ -1,3 +1,4 @@
+import datetime as dt
 import subprocess
 import logging
 import os
@@ -6,8 +7,15 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+class ExecutionResult(BaseModel):
+    stdout: list[str] | None
+    stderr: list[str] | None
+    start_time: dt.datetime
+    end_time: dt.datetime
 
 class Command:
     @classmethod
@@ -57,13 +65,17 @@ class Command:
 
     @classmethod
     def run_with_progress(cls,
-                          command: list[str],
+                          command: list[str] | str,
                           env: dict[str, any] = {},
                           shell: bool = False,
-                          requires_root: bool = False):
+                          requires_root: bool = False) -> ExecutionResult:
         environ = os.environ.copy()
         for k,v in env.items():
             environ[k] = v
+
+        if type(command) is str and not shell:
+            raise ValueError("Command.run_with_progress: "
+                             "command as string, requires shell=True")
 
         result = subprocess.run(["id","-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environ)
         user_id = int(result.stdout.decode("UTF-8").strip())
@@ -73,6 +85,8 @@ class Command:
             cmd = ["sudo"] + command
         else:
             cmd = command
+
+        start_time = dt.datetime.now(tz=dt.timezone.utc)
 
         stdout = []
         stderr = []
@@ -109,6 +123,8 @@ class Command:
 
                 time.sleep(0.1)
 
+            end_time = dt.datetime.now(tz=dt.timezone.utc)
+
             # Get remaining lines
             for line in process.stdout:
                 output_line = line.decode("UTF-8").rstrip()
@@ -124,7 +140,11 @@ class Command:
                 error_details = '\n'.join(stderr)
                 raise RuntimeError(f"Execution of '{' '.join(cmd)}' failed -- details: {error_details}")
 
-            return stdout
+            return ExecutionResult(stdout=stdout,
+                                   stderr=stderr,
+                                   start_time=start_time,
+                                   end_time=end_time
+                   )
 
 def pipe_has_data(pipe, selector) -> bool:
     """Check if the pipe has data available for reading (Linux/macOS)."""

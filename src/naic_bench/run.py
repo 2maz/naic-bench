@@ -2,17 +2,11 @@ from pathlib import Path
 import subprocess
 import logging
 import yaml
-import os
 import platform
 import site
-import selectors
-import sys
-import time
-import datetime as dt
-
 from slurm_monitor.utils.system_info import SystemInfo
 
-from naic_bench.utils import pipe_has_data
+from naic_bench.utils import Command
 from naic_bench.spec import (
         VirtualEnv,
         Report,
@@ -90,64 +84,18 @@ class BenchmarkRunner:
 
         venv = self.prepare_venv(benchmark_name=name, workdir=workdir)
 
-        stdout = []
-        stderr = []
-        start_time = dt.datetime.now(tz=dt.timezone.utc)
         logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: . {venv.name}/bin/activate; cd {workdir}; PYTHONPATH={venv.python_path} {cmd}")
-        with subprocess.Popen(
+        result = Command.run_with_process(
                     f". {venv.name}/bin/activate; cd {workdir}; PYTHONPATH={venv.python_path} {cmd}",
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                ) as process:
-
-            os.set_blocking(process.stdout.fileno(), False)
-            stdout_selector = selectors.DefaultSelector()
-            stdout_selector.register(process.stdout, selectors.EVENT_READ)
-
-            os.set_blocking(process.stderr.fileno(), False)
-            stderr_selector = selectors.DefaultSelector()
-            stderr_selector.register(process.stderr, selectors.EVENT_READ)
-
-            while process.poll() is None:
-                if pipe_has_data(process.stdout, stdout_selector):
-                    stdout_line = process.stdout.readline()
-                    if stdout_line:
-                        output_line = stdout_line.decode("UTF-8").strip()
-                        print(output_line, flush=True, file=sys.stdout)
-                        stdout.append(output_line)
-
-                if pipe_has_data(process.stderr, stderr_selector):
-                    stderr_line = process.stderr.readline()
-                    if stderr_line:
-                        output_line = stderr_line.decode("UTF-8").strip()
-                        print(output_line, flush=True, file=sys.stderr)
-                        stderr.append(output_line)
-
-                time.sleep(0.1)
-
-            end_time = dt.datetime.now(tz=dt.timezone.utc)
-            # Get remaining lines
-            for line in process.stdout:
-                output_line = line.decode("UTF-8").strip()
-                stdout.append(output_line)
-                print(output_line, flush=True, file=sys.stdout)
-
-            for line in process.stderr:
-                output_line = line.decode("UTF-8").strip()
-                stderr.append(output_line)
-                print(output_line, flush=True, file=sys.stderr)
-
-            if process.returncode != 0:
-                error_details = '\n'.join(stderr)
-                raise RuntimeError(f"Benchmark {name=} {variant=} failed -- details: {error_details}")
+                    shell=True
+                 )
 
         with open(config.temp_dir / "stdout.log", "w") as f:
-            for line in stdout:
+            for line in result.stdout:
                 f.write(f"{line}\n")
 
         with open(config.temp_dir / "stderr.log", "w") as f:
-            for line in stderr:
+            for line in result.stderr:
                 f.write(f"{line}\n")
 
         si = SystemInfo()
@@ -166,13 +114,13 @@ class BenchmarkRunner:
         report = Report(
             benchmark=name,
             variant=variant,
-            start_time=int(start_time.timestamp()),
-            end_time=int(end_time.timestamp()),
+            start_time=int(result.start_time.timestamp()),
+            end_time=int(result.end_time.timestamp()),
             # slurm_job_id=0
             device_type=device_type,
             gpu_model=si.gpu_info.model,
             gpu_count=gpu_count,
-            metrics=config.extract_metrics(stdout + stderr)
+            metrics=config.extract_metrics(result.stdout + result.stderr)
         )
 
         with open(config.temp_dir / "report.yaml", "w") as f:
