@@ -39,6 +39,8 @@ dependencies = [
     "pydantic",
     "pydantic-settings",
     "pyyaml",
+    "rich",
+    "rich-argparse",
     "slurm-monitor @ git+https://github.com/2maz/slurm-monitor.git",
     "dllogger @ git+https://github.com/NVIDIA/dllogger@v1.1.0#egg=dllogger"
 ]

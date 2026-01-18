@@ -1,3 +1,4 @@
+from rich import print as print
 from pathlib import Path
 import subprocess
 import logging

@@ -1,3 +1,4 @@
+from rich import print as print
 from argparse import ArgumentParser
 from docker import from_env
 import logging

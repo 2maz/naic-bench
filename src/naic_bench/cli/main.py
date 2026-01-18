@@ -1,8 +1,11 @@
 from argparse import ArgumentParser
-import sys
-import traceback as tb
 import logging
 from logging import basicConfig, getLogger
+from rich import print as print
+from rich.logging import RichHandler
+from rich_argparse import RichHelpFormatter
+import sys
+import traceback as tb
 
 from naic_bench.cli.base import BaseParser
 from naic_bench.cli.prepare import PrepareParser
@@ -32,15 +35,17 @@ class MainParser(ArgumentParser):
             self.subparsers = self.add_subparsers(help="sub-command help")
 
         subparser = self.subparsers.add_parser(subcommand)
+        subparser.formatter_class = RichHelpFormatter
         parser_klass(parser=subparser)
 
 def run():
     basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers=[RichHandler(rich_tracebacks=True)]
     )
 
-    main_parser = MainParser()
+    main_parser = MainParser(formatter_class=RichHelpFormatter)
 
     main_parser.attach_subcommand_parser(
         subcommand="prepare",
@@ -71,13 +76,13 @@ def run():
             getattr(args, "active_subparser").execute(args)
         except Exception as e:
             tb.print_tb(e.__traceback__)
-            print(f"Error: {e}")
+            logger.exception(f"Error: {e}")
             sys.exit(-1)
     else:
         main_parser.print_help()
 
-    for logger in [logging.getLogger(x) for x in logging.root.manager.loggerDict]:
-        logger.setLevel(logging.getLevelName(args.log_level))
+    for a_logger in [logging.getLogger(x) for x in logging.root.manager.loggerDict]:
+        a_logger.setLevel(logging.getLevelName(args.log_level))
 
 if __name__ == "__main__":
     run()
