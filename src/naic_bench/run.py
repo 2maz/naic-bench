@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 import logging
 import yaml
+import os
 import platform
 import site
 from slurm_monitor.utils.system_info import SystemInfo
@@ -73,9 +74,12 @@ class BenchmarkRunner:
             variant: str,
             device_type: str = "cpu",
             gpu_count: int = 1,
+            cpu_count: int | None = os.cpu_count(),
             timeout_in_s: int = 1200):
         config = self.benchmark_specs[framework][name][variant]
         config.expand_placeholders(GPU_COUNT=gpu_count)
+        if cpu_count is not None:
+            config.expand_placeholders(CPU_COUNT=cpu_count)
 
         clone_target_path = config.git_target_dir(self.benchmarks_dir)
         workdir = clone_target_path / config.base_dir
