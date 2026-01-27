@@ -8,6 +8,7 @@ from naic_bench.utils import Command
 from pathlib import Path
 import platform
 import os
+import re
 import subprocess
 import sys
 
@@ -50,6 +51,16 @@ class Docker:
         self.client = from_env()
 
     @classmethod
+    def runtimes(cls):
+        result = Command.run(["docker", "info"])
+        for line in result.splitlines():
+            m = re.search(r"Runtimes: (.*)", line)
+            if m:
+                return m.groups()[0].split(' ')
+
+        return False
+
+    @classmethod
     def default_args(cls,
             cpus: int = os.cpu_count(),
             shm_size: str = '16g') -> list[str]:
@@ -75,11 +86,16 @@ class Docker:
             return docker_args
 
         if "CUDA_VISIBLE_DEVICES" in env:
+            docker_args += ["-e", f"CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']}"]
             if device_type.startswith("nvidia"):
-                uuids = device_uuids_nvidia()
-                docker_args = ["--gpus", f"device='\"{','.join(uuids)}\"'"]
+                if 'nvidia' in cls.runtimes():
+                    docker_args = ["--runtime", "nvidia"]
+                else:
+                    uuids = device_uuids_nvidia()
+                    device_list = f"device={','.join(uuids)}"
+                    docker_args = ["--gpus", f'"{device_list}"']
             else:
-                docker_args += ["-e", f"CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']}"]
+                docker_args = ["--gpus", "all"]
         elif device_type not in ["xpu"]:
             docker_args += ["--gpus", "all"]
 
@@ -210,8 +226,10 @@ def run():
         print(f"Please remove the container first: docker rm {container_name} or call with --restart")
         sys.exit(10)
 
+    Command.find(command="docker", do_throw=True)
+
     if build:
-        Command.run_with_progress(["docker", "build", "--no-cache", "-t", image_name, "-f", str(dockerfile), "."])
+        Command.run_with_progress(["docker", "build", "--no-cache", "-t", image_name, "-f", str(dockerfile), dockerfile.parent])
 
     if start:
         # start the container with the correct mounted volumes
@@ -235,6 +253,13 @@ def run():
     print()
 
     if exec_args:
+        container = docker.container(container_name)
+        mounts = container.attrs["Mounts"]
+        if mounts:
+            print("    mounted:")
+            [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
+        print()
+
         docker_exec = ["docker", "exec", container_name]
         docker_exec += exec_args
         Command.run_with_progress(docker_exec)
