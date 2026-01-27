@@ -8,26 +8,16 @@ from naic_bench.utils import Command
 from pathlib import Path
 import platform
 import os
+import subprocess
 import sys
 
 
 logger = getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-#        $DOCKER_CUDA_SETUP \
-#        $DOCKER_VOLUMES \
-#        $DOCKER_ENVIRONMENT \
-#"--rm",
-# "--shm-size","1024g" \
-# "--cpus","{{CPU_COUNT}}",
-
+#
+# Relate device_type to startup options
 # Dockerfile.<devicetype>
-
-DOCKER_DEFAULT_ARGS = [
-  #"--rm",
-  "--shm-size", "64g",
-  #"--cpus, "{{CPU_COUNT}}"
-]
 DOCKER_DEVICE_TYPE_ARGS = {
     'nvidia': [],
     'habana': [
@@ -35,7 +25,6 @@ DOCKER_DEVICE_TYPE_ARGS = {
         "-e", "OMPI_MCA_btl_vader_single_copy_mechanism=none",
         "--cap-add", "sys_nice",
         "--net", "host"
-
     ],
     'rocm': [
         "--cap-add","SYS_PTRACE",
@@ -59,6 +48,23 @@ def device_uuids_nvidia():
 class Docker:
     def __init__(self):
         self.client = from_env()
+
+    @classmethod
+    def default_args(cls,
+            cpus: int = os.cpu_count(),
+            shm_size: str = '16g') -> list[str]:
+        args = [
+            "--rm",
+            "--shm-size", shm_size,
+            "--cpus", str(cpus)
+        ]
+
+        if "SLURM_JOB_ID" in os.environ:
+            args += [
+                "-e", f"SLURM_JOB_ID={os.environ['SLURM_JOB_ID']}"
+            ]
+
+        return args
 
     @classmethod
     def device_setup_args(cls, device_type: str) -> list[str]:
@@ -145,12 +151,20 @@ def run():
     parser.add_argument("--restart", action="store_true", default=False)
 
     parser.add_argument("--device-type", required=True, type=str, default=None)
-    parser.add_argument("--container", required=True, type=str, default=None)
+    parser.add_argument("--container",
+        help="The container name, default is 'naic-bench-<device-type>'",
+        required=False,
+        type=str,
+        default=None
+    )
     parser.add_argument("--data-dir", type=str, default=None)
+
+    parser.add_argument("--cpus", type=int, default=os.cpu_count())
+    parser.add_argument("--shm-size", type=str, default="16g")
 
     args, options = parser.parse_known_args()
 
-    exec_args = []
+    exec_args = options
     if options and options[0] == "--":
         exec_args = options[1:]
 
@@ -166,7 +180,12 @@ def run():
 
     docker = Docker()
     image = docker.image(image_name)
-    container = docker.container(args.container)
+
+    container_name = args.container
+    if container_name is None:
+        container_name = f"naic-bench-{args.device_type}"
+
+    container = docker.container(container_name)
 
     if not image:
         build = True
@@ -185,10 +204,10 @@ def run():
         container.remove()
         start = True
     elif container.status == "running":
-        print(f"Docker container '{args.container}' exists - reusing")
+        print(f"Docker container '{container_name}' exists - reusing")
     elif not container.status == "running":
-        print(f"Container {args.container} exists - but status={container.status}")
-        print(f"Please remove the container first: docker rm {args.container} or call with --restart")
+        print(f"Container {container_name} exists - but status={container.status}")
+        print(f"Please remove the container first: docker rm {container_name} or call with --restart")
         sys.exit(10)
 
     if build:
@@ -196,10 +215,10 @@ def run():
 
     if start:
         # start the container with the correct mounted volumes
-        docker_run = ["docker", "run", "-d", "--name", args.container]
+        docker_run = ["docker", "run", "-d", "--name", container_name]
         if args.data_dir:
             docker_run += ["-v", f"{Path(args.data_dir).resolve()}:/data"]
-        docker_run += DOCKER_DEFAULT_ARGS
+        docker_run += Docker.default_args(cpus=args.cpus, shm_size=args.shm_size)
 
         docker_run += Docker.device_specific_args(device_type)
         docker_run += [image_name]
@@ -208,19 +227,23 @@ def run():
         Command.run_with_progress(docker_run)
 
 
-    if exec_args:
-        container = docker.container(args.container)
-        mounts = container.attrs["Mounts"]
-        if mounts:
-            print("    mounted:")
-            [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
-        print()
+    container = docker.container(container_name)
+    mounts = container.attrs["Mounts"]
+    if mounts:
+        print("    mounted:")
+        [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
+    print()
 
-        docker_exec = ["docker", "exec", args.container]
+    if exec_args:
+        docker_exec = ["docker", "exec", container_name]
         docker_exec += exec_args
         Command.run_with_progress(docker_exec)
     else:
         print("No command provide to execute in docker: if required append '-- <command>'")
+        docker_exec = ["docker", "exec", "-it", container_name, "bash" ]
+        print(f"Entering container '{container_name}' in interactive mode (quit with CTRL-D)")
+        subprocess.run(' '.join(docker_exec), shell=True)
+
 
 if __name__ == "__main__":
     run()
