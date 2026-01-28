@@ -149,14 +149,29 @@ class BenchmarkSpec(BaseSettings):
     def expand_placeholders(self, *args, **kwargs):
         updated_arguments = {}
         for k,v in kwargs.items():
-            pattern = "{{" + f"{k}" + "}}"
+            pattern = "{{" + f"{k}" + "(:([<=>]+)(.*))?}}"
 
             for argument_name, argument_value in self.arguments.items():
                 if argument_value is None or type(argument_value) is not str:
                     updated_arguments[argument_name] = argument_value
                     continue
                 else:
+                    m = re.match(pattern, argument_value)
+                    if m and m.groups()[1] is not None:
+                        operator = m.groups()[1]
+                        rhs = m.groups()[2]
+                        if '.' in rhs:
+                            rhs = float(rhs)
+                        else:
+                            rhs = int(rhs)
+
+                        if operator == "<=":
+                            v = min(v, rhs)
+                        elif operator == ">=":
+                            v = max(v, rhs)
+
                     updated_arguments[argument_name] = re.sub(pattern, str(v), argument_value)
+
             self.command = re.sub(pattern, str(v), self.command)
             self.command_distributed = re.sub(pattern, str(v), self.command_distributed)
             self.arguments = updated_arguments
