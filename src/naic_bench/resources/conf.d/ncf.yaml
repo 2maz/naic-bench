@@ -10,7 +10,7 @@ pytorch:
       data: ncf.prepare
     metrics:
       throughput:
-        pattern: "best_train_throughput\\s+:\\s+([0-9\\.e+]+)"
+        pattern: "best_train_throughput\\s*:\\s*([0-9\\.e+]+)"
     variants:
       fp32:
         base_dir: PyTorch/Recommendation/NCF

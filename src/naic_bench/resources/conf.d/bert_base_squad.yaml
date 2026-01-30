@@ -16,7 +16,7 @@ pytorch:
       python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} run_squad.py
     metrics:
       throughput:
-        pattern: "training_sequences_per_second\\s+:\\s+([0-9\\.]+)"
+        pattern: "training_sequences_per_second\\s*:\\s*([0-9e+\\.]+)"
     variants:
       fp16:
         base_dir: PyTorch/LanguageModeling/BERT

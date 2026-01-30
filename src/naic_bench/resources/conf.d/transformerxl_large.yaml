@@ -10,14 +10,14 @@ pytorch:
       data: transformer.prepare
     metrics:
       throughput:
-        pattern: "Training throughput\\s+:\\s+([0-9e\\.+]\\+)"
+        pattern: "Training throughput\\s*:\\s*([0-9e\\.+]+)"
     variants:
       fp16:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
           size_1gb: 0.25
           multiple_pu_scaling_factor: 1.0
-          apply_via: --batch-size
+          apply_via: --batch_size
         arguments:
           work_dir: "{{TMP_DIR}}"
           data: "{{DATA_DIR}}/transformer-xl/wikitext-103"
@@ -47,7 +47,7 @@ pytorch:
         batch_size:
           size_1gb: 0.125
           multiple_pu_scaling_factor: 1.0
-          apply_via: --batch-size
+          apply_via: --batch_size
         arguments:
           work_dir: "{{TMP_DIR}}"
           data: "{{DATA_DIR}}/transformer-xl/wikitext-103"
