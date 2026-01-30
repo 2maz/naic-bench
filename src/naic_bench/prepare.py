@@ -80,6 +80,12 @@ class BenchmarkPrepare:
                     if not Path(prepare_file).is_absolute():
                         prepare_file = Path(self.confd_dir) / prepare_file
 
+                    if not prepare_file.exists():
+                        raise FileNotFoundError(
+                                    f"Prepare file does not exists: '{prepare_file}'\n" \
+                                    f"Please check specfile of '{benchmark_name}'"
+                                )
+
                     prepare_file = prepare_file.resolve()
                     if prepare_file in mark_as_run:
                         continue

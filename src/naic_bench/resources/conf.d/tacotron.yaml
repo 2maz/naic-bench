@@ -7,7 +7,7 @@ pytorch:
     command_distributed: >
       python -m multiproc {{GPU_COUNT}} train.py
     prepare:
-      data: tactoron.prepare
+      data: tacotron.prepare
     metrics:
       throughput:
         pattern: "train_items_per_sec\\s+:\\s+([0-9e\\.+]\\+)"
