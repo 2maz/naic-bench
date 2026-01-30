@@ -12,6 +12,8 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 class ExecutionResult(BaseModel):
+    returncode: int
+
     stdout: list[str] | None
     stderr: list[str] | None
     start_time: dt.datetime
@@ -68,7 +70,8 @@ class Command:
                           command: list[str],
                           env: dict[str, any] = {},
                           shell: bool = False,
-                          requires_root: bool = False) -> ExecutionResult:
+                          requires_root: bool = False,
+                          raise_on_error: bool = True) -> ExecutionResult:
         environ = os.environ.copy()
         for k,v in env.items():
             environ[k] = v
@@ -140,14 +143,16 @@ class Command:
                 stderr.append(output_line)
                 print(output_line, flush=True, file=sys.stderr)
 
-            if process.returncode != 0:
+            if raise_on_error and process.returncode != 0:
                 error_details = '\n'.join(stderr)
                 raise RuntimeError(f"Execution of '{' '.join(cmd)}' failed -- details: {error_details}")
 
-            return ExecutionResult(stdout=stdout,
-                                   stderr=stderr,
-                                   start_time=start_time,
-                                   end_time=end_time
+            return ExecutionResult(
+                       returncode=process.returncode,
+                       stdout=stdout,
+                       stderr=stderr,
+                       start_time=start_time,
+                       end_time=end_time
                    )
 
 def pipe_has_data(pipe, selector) -> bool:

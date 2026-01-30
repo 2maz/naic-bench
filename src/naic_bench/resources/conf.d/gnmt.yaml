@@ -25,12 +25,12 @@ pytorch:
           math: fp32
           epochs: 2
           seed: 2
-          train-loader-workers: "{{CPU_COUNT}}"
+          train-loader-workers: "{{CPU_COUNT|<=32}}"
           save-dir: "{{TMP_DIR}}"
       fp16:
         base_dir: PyTorch/Translation/GNMT
         batch_size:
-          size_1gb: 16
+          size_1gb: 10
           multiple_gpu_scaling_factor: 0.7
           apply_via: --train-batch-size
         arguments:
@@ -38,5 +38,5 @@ pytorch:
           math: fp16
           epochs: 2
           seed: 2
-          train-loader-workers: "{{CPU_COUNT}}"
+          train-loader-workers: "{{CPU_COUNT|<=32}}"
           save-dir: "{{TMP_DIR}}"

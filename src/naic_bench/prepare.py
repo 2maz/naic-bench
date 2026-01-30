@@ -65,6 +65,11 @@ class BenchmarkPrepare:
     def prepare(self, benchmark_names: list[str] | None = None):
         benchmarks = BenchmarkSpec.all_as_list(confd_dir=self.confd_dir, data_dir=self.data_dir)
         mark_as_run = set()
+
+        if not benchmark_names:
+            all_benchmarks = [y for x,y,z,spec in benchmarks]
+            logger.warning(f"Preparing all benchmarks defined in {self.confd_dir}\n{sorted(all_benchmarks)}")
+
         for framework, benchmark_name, variant, benchmark_spec in benchmarks:
             if benchmark_names and benchmark_name not in benchmark_names:
                 continue

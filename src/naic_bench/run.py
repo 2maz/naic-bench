@@ -2,13 +2,14 @@ from rich import print as print
 from pathlib import Path
 import subprocess
 import logging
+import shutil
 import yaml
 import os
 import platform
 import site
 from slurm_monitor.utils.system_info import SystemInfo
 
-from naic_bench.utils import Command
+from naic_bench.utils import Command, find_confd
 from naic_bench.spec import (
         VirtualEnv,
         Report,
@@ -20,6 +21,10 @@ logger.setLevel(logging.INFO)
 
 class BenchmarkRunner:
     benchmark_specs: dict[str, any]
+
+    data_dir: Path
+    benchmarks_dir: Path
+    confd_dir: Path
 
     def __init__(self, *,
             data_dir: Path | str,
@@ -40,7 +45,7 @@ class BenchmarkRunner:
 
         self.load_all()
 
-    def prepare_venv(self, benchmark_name: str, benchmark_dir: Path | str, work_dir: Path | str = Path().resolve()) -> str:
+    def prepare_venv(self, benchmark_name: str, benchmark_dir: Path | str, work_dir: Path | str = Path().resolve(), force: bool = False) -> str:
         """
         Prepare venv and return python path setting
         """
@@ -58,6 +63,14 @@ class BenchmarkRunner:
         python_path = f"{python_path}:{':'.join(site.getsitepackages())}"
         venv = VirtualEnv(path=venv_path, python_path=python_path)
 
+        if venv.path.exists():
+            if force:
+                logger.warning(f"BenchmarkRunner[{benchmark_name}]: venv: {venv.name} already exists (forcing recreation)")
+                shutil.rmtree(venv.path)
+            else:
+                logger.info(f"BenchmarkRunner[{benchmark_name}]: venv: {venv.name} already exists (reusing)")
+                return venv
+
         if not venv.path.exists():
             logger.info(f"BenchmarkRunner[{benchmark_name}]: preparing venv: {venv.name}")
             result = subprocess.run(["python3", "-m", "venv", venv.path],
@@ -69,12 +82,53 @@ class BenchmarkRunner:
             requirements_txt = benchmark_dir / "requirements.txt"
             if requirements_txt.exists():
                 subprocess.run(f". {venv.path}/bin/activate; PYTHONPATH={venv.python_path} pip install -r {requirements_txt}", shell=True)
-        else:
-            logger.info(f"BenchmarkRunner[{benchmark_name}]: venv: {venv.name} already exists")
         return venv
 
     def load_all(self):
         self.benchmark_specs = BenchmarkSpec.load_all(confd_dir=self.confd_dir, data_dir=self.data_dir)
+
+
+    def execute_all(self,
+            framework: str,
+            names: list[str] = [],
+            variants: list[str] = [],
+            device_type: str = "cpu",
+            gpu_count: int = 1,
+            cpu_count: int | None = os.cpu_count(),
+            timeout_in_s: int = 1200,
+            recreate_venv: bool = False):
+
+        benchmarks = BenchmarkSpec.all_as_list(confd_dir=self.confd_dir, data_dir=self.data_dir)
+        reports = []
+
+        if not names:
+            all_benchmarks = [y for x,y,z,spec in benchmarks]
+            msg = f"Running all benchmarks defined in {self.confd_dir}\n{sorted(all_benchmarks)}"
+            if variants:
+                msg += "(for variants: {variants})"
+            else:
+                msg += "(for all variants)"
+            print(msg)
+
+        for framework, benchmark_name, variant, benchmark_spec in benchmarks:
+            if names and benchmark_name not in names:
+                continue
+
+            if variants and variant not in variants:
+                continue
+
+            report = self.execute(framework=framework,
+                    name=benchmark_name,
+                    variant=variant,
+                    device_type=device_type,
+                    gpu_count=gpu_count,
+                    cpu_count=cpu_count,
+                    timeout_in_s=timeout_in_s,
+                    recreate_venv=recreate_venv
+            )
+            reports.append(report)
+
+        return reports
 
     def execute(self,
             framework: str,
@@ -83,7 +137,8 @@ class BenchmarkRunner:
             device_type: str = "cpu",
             gpu_count: int = 1,
             cpu_count: int | None = os.cpu_count(),
-            timeout_in_s: int = 1200):
+            timeout_in_s: int = 1200,
+            recreate_venv: bool = False):
         config = self.benchmark_specs[framework][name][variant]
         config.expand_placeholders(GPU_COUNT=gpu_count)
         if cpu_count is not None:
@@ -95,12 +150,13 @@ class BenchmarkRunner:
         cmd = config.get_command(device_type=device_type, gpu_count=gpu_count)
         logger.info(f"Execute: {cmd} in {benchmark_dir=}")
 
-        venv = self.prepare_venv(benchmark_name=name, benchmark_dir=benchmark_dir)
+        venv = self.prepare_venv(benchmark_name=name, benchmark_dir=benchmark_dir, force=recreate_venv)
 
         logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: . {venv.name}/bin/activate; cd {benchmark_dir}; PYTHONPATH={venv.python_path} {cmd}")
         result = Command.run_with_progress(
                     [f". {venv.path}/bin/activate; cd {benchmark_dir}; PYTHONPATH={venv.python_path} {cmd}"],
-                    shell=True
+                    shell=True,
+                    raise_on_error=False
                  )
 
         with open(config.temp_dir / "stdout.log", "w") as f:
@@ -124,16 +180,21 @@ class BenchmarkRunner:
 
             yaml.dump(data, f)
 
+        metrics = {}
+        if result.returncode == 0:
+            metrics = config.extract_metrics(result.stdout + result.stderr)
+
         report = Report(
             benchmark=name,
             variant=variant,
             start_time=int(result.start_time.timestamp()),
             end_time=int(result.end_time.timestamp()),
+            exit_code=result.returncode,
             # slurm_job_id=0
             device_type=device_type,
             gpu_model=si.gpu_info.model,
             gpu_count=gpu_count,
-            metrics=config.extract_metrics(result.stdout + result.stderr)
+            metrics=metrics
         )
 
         with open(config.temp_dir / "report.yaml", "w") as f:

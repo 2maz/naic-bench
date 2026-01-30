@@ -60,7 +60,6 @@ pytorch:
           seed: 1
           vocab_file: "{{DATA_DIR}}/bert_base/bert-base-uncased-vocab.txt"
           output_dir: "{{TMP_DIR}}"
-          mode: "train"
           config_file: "{{DATA_DIR}}/bert_base/bert_config.json"
           max_steps: 100
           json-summary: "{{TMP_DIR}}/dllogger-summary.json"

@@ -14,12 +14,29 @@ class RunParser(BaseParser):
         parser.add_argument("--benchmarks-dir", required=True, default=None, type=str)
 
         parser.add_argument("--framework", default="pytorch", type=str)
-        parser.add_argument("--benchmark", required=True, type=str)
-        parser.add_argument("--variant", required=True, type=str)
-        parser.add_argument("--device-type", required=True, type=str)
+        parser.add_argument("--benchmark",
+            nargs="+",
+            default=None,
+            type=str
+        )
+        parser.add_argument("--variant",
+            nargs="+",
+            default=None,
+            type=str
+        )
+        parser.add_argument("--device-type",
+                            required=True,
+                            help="Device type required: select from 'cpu','cuda','xpu','hpu'",
+                            type=str)
 
         parser.add_argument("--confd-dir", default=None, type=str)
         parser.add_argument("--gpu-count", type=int, default=1)
+
+        parser.add_argument("--recreate-venv",
+                            action="store_true",
+                            default=False,
+                            help="Force the recreation of any related venv for the benchmarks"
+        )
 
     def execute(self, args):
         super().execute(args)
@@ -30,9 +47,12 @@ class RunParser(BaseParser):
                 confd_dir=args.confd_dir
         )
 
-        report = runner.execute(args.framework,
+        reports = runner.execute_all(args.framework,
                 args.benchmark, args.variant,
                 device_type=args.device_type,
-                gpu_count=args.gpu_count
+                gpu_count=args.gpu_count,
+                recreate_venv=args.recreate_venv
         )
-        print(report)
+
+        for report in reports:
+            print(report)
