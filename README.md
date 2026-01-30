@@ -33,7 +33,7 @@ Using the command line interface:
 Here we describe the basic usage of naic-bench. The main information and description of the benchmarks resides in a conf.d folder.
 This package already provides a predefined set of benchmarks.
 
-Before running a benchmarks, the necessary input data might have to be downloaded. To trigger this 'prepare' stage of the benchmark, 
+Before running a benchmarks, the necessary input data might have to be downloaded. To trigger this 'prepare' stage of the benchmark,
 use 'naic-bench prepare'.
 
 The following example prepares the data required from 'gnmt' benchmark after downloading the source of the benchmark
