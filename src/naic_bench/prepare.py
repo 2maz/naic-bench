@@ -4,6 +4,7 @@ import logging
 import os
 from git import Repo
 
+from naic_bench.utils import find_confd
 from naic_bench.spec import BenchmarkSpec
 from naic_bench.package_manager import (
     PackageManager,
@@ -44,11 +45,17 @@ class BenchmarkPrepare:
     def __init__(self, *,
             data_dir: Path | str,
             benchmarks_dir: Path | str,
-            confd_dir: Path | str
+            confd_dir: Path | str | None
             ):
         self.data_dir = Path(data_dir).resolve()
         self.benchmarks_dir = Path(benchmarks_dir).resolve()
+
+        if confd_dir is None:
+            confd_dir = find_confd()
+
         self.confd_dir = Path(confd_dir).resolve()
+        if not self.confd_dir.exists():
+            raise RuntimeError(f"Could not find confd directory: {self.confd_dir}")
 
     @classmethod
     def install_prerequisites(cls):

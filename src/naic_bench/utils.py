@@ -157,3 +157,15 @@ def pipe_has_data(pipe, selector) -> bool:
         if key.fileobj == pipe:
             return True
     return False
+
+def find_confd() -> Path | None:
+    hints = [
+        Path() / "conf.d",
+        Path(__file__).parent / "resources" / "conf.d"
+    ]
+
+    for hint in hints:
+        if hint.exists():
+            return hint
+
+    return None

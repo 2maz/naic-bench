@@ -12,7 +12,7 @@ class PrepareParser(BaseParser):
 
         parser.add_argument("--data-dir", required=True, default=None, type=str)
         parser.add_argument("--benchmarks-dir", required=True, default=None, type=str)
-        parser.add_argument("--confd-dir", default="./conf.d", type=str)
+        parser.add_argument("--confd-dir", default=None, type=str)
 
         parser.add_argument("--benchmark",
                 nargs="+",

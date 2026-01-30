@@ -18,7 +18,7 @@ class RunParser(BaseParser):
         parser.add_argument("--variant", required=True, type=str)
         parser.add_argument("--device-type", required=True, type=str)
 
-        parser.add_argument("--confd-dir", default="./conf.d", type=str)
+        parser.add_argument("--confd-dir", default=None, type=str)
         parser.add_argument("--gpu-count", type=int, default=1)
 
     def execute(self, args):

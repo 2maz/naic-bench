@@ -28,7 +28,13 @@ class BenchmarkRunner:
             ):
         self.data_dir = Path(data_dir)
         self.benchmarks_dir = Path(benchmarks_dir)
-        self.confd_dir = Path(confd_dir)
+
+        if confd_dir is None:
+            confd_dir = find_confd()
+
+        self.confd_dir = Path(confd_dir).resolve()
+        if not self.confd_dir.exists():
+            raise RuntimeError(f"Could not find confd directory: {self.confd_dir}")
 
         self.benchmark_specs = {}
 
