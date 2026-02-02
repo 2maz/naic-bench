@@ -1,6 +1,7 @@
 from rich import print as print
 from argparse import ArgumentParser
 from docker import from_env
+from docker.errors import APIError, NotFound
 import logging
 from logging import basicConfig, getLogger
 
@@ -211,13 +212,19 @@ def run():
     elif args.rebuild:
         logger.info(f"docker: rebuild requested - stopping and removing container '{container.name}'")
         container.stop()
-        container.remove()
+        try:
+            container.remove()
+        except (NotFound, APIError):
+            pass
         build = True
         start = True
     elif args.restart:
         logger.info(f"docker: restart requested - stopping and removing container '{container.name}'")
         container.stop()
-        container.remove()
+        try:
+            container.remove()
+        except (NotFound, APIError):
+            pass
         start = True
     elif container.status == "running":
         print(f"Docker container '{container_name}' exists - reusing")
