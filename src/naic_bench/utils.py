@@ -2,7 +2,9 @@ import datetime as dt
 import subprocess
 import logging
 import os
+import psutil
 import selectors
+import signal
 import shutil
 import sys
 import time
@@ -12,6 +14,7 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 class ExecutionResult(BaseModel):
+    pid: int
     returncode: int
 
     stdout: list[str] | None
@@ -148,6 +151,7 @@ class Command:
                 raise RuntimeError(f"Execution of '{' '.join(cmd)}' failed -- details: {error_details}")
 
             return ExecutionResult(
+                       pid=process.pid,
                        returncode=process.returncode,
                        stdout=stdout,
                        stderr=stderr,

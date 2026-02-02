@@ -4,8 +4,10 @@ import subprocess
 import logging
 import shutil
 import yaml
+import time
 import os
 import platform
+import psutil
 import site
 from slurm_monitor.utils.system_info import SystemInfo
 
@@ -95,7 +97,8 @@ class BenchmarkRunner:
             device_type: str = "cpu",
             gpu_count: int = 1,
             cpu_count: int | None = os.cpu_count(),
-            timeout_in_s: int = 1200,
+            timeout_in_s: int = 3600,
+            grace_period_in_s: int = 30,
             recreate_venv: bool = False):
 
         benchmarks = BenchmarkSpec.all_as_list(confd_dir=self.confd_dir, data_dir=self.data_dir)
@@ -127,6 +130,11 @@ class BenchmarkRunner:
                     recreate_venv=recreate_venv
             )
             reports.append(report)
+            print(f"BenchmarkRunner {benchmark_name}|{variant}: Grace period: waiting to {grace_period_in_s} s to finalize")
+            for i in reversed(range(0, grace_period_in_s)):
+                print(".", end='')
+                time.sleep(1)
+            print(f"BenchmarkRunner {benchmark_name}|{variant}: Grace period: completed")
 
         return reports
 
@@ -137,7 +145,7 @@ class BenchmarkRunner:
             device_type: str = "cpu",
             gpu_count: int = 1,
             cpu_count: int | None = os.cpu_count(),
-            timeout_in_s: int = 1200,
+            timeout_in_s: int = 3600,
             recreate_venv: bool = False):
         config = self.benchmark_specs[framework][name][variant]
         config.expand_placeholders(GPU_COUNT=gpu_count)
@@ -154,10 +162,19 @@ class BenchmarkRunner:
 
         logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: . {venv.name}/bin/activate; cd {benchmark_dir}; PYTHONPATH={venv.python_path} {cmd}")
         result = Command.run_with_progress(
-                    [f". {venv.path}/bin/activate; cd {benchmark_dir}; PYTHONPATH={venv.python_path} {cmd}"],
+                    [f". {venv.path}/bin/activate; cd {benchmark_dir}; PYTHONPATH={venv.python_path} timeout {timeout_in_s}s {cmd}"],
                     shell=True,
                     raise_on_error=False
                  )
+        try:
+            process = psutil.Process(result.pid)
+            logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: process {result.pid} is still running - trying to kill")
+            os.kill(result.pid, signal.SIGKILL)
+        except psutil.NoSuchProcess as e:
+            # this is how
+            pass
+        except OSError as e:
+            logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: failed to kill process {result.pid}")
 
         with open(config.temp_dir / "stdout.log", "w") as f:
             for line in result.stdout:
