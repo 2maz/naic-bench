@@ -71,6 +71,10 @@ def run():
         print(__version__)
         sys.exit(0)
 
+    for a_logger in [logging.getLogger(x) for x in logging.root.manager.loggerDict]:
+        if a_logger.name.startswith("naic_bench"):
+            a_logger.setLevel(logging.getLevelName(args.log_level))
+
     if hasattr(args, "active_subparser"):
         try:
             getattr(args, "active_subparser").execute(args)
@@ -80,9 +84,6 @@ def run():
             sys.exit(-1)
     else:
         main_parser.print_help()
-
-    for a_logger in [logging.getLogger(x) for x in logging.root.manager.loggerDict]:
-        a_logger.setLevel(logging.getLevelName(args.log_level))
 
 if __name__ == "__main__":
     run()
