@@ -26,7 +26,9 @@ DOCKER_DEVICE_TYPE_ARGS = {
         "--runtime", "habana",
         "-e", "OMPI_MCA_btl_vader_single_copy_mechanism=none",
         "--cap-add", "sys_nice",
-        "--net", "host"
+        "--net", "host",
+        "--ipc", "host",
+        "-v", "var-log-habana:/var/log/habana_logs",
     ],
     'rocm': [
         "--cap-add","SYS_PTRACE",
@@ -97,7 +99,7 @@ class Docker:
                     docker_args = ["--gpus", f'"{device_list}"']
             else:
                 docker_args = ["--gpus", "all"]
-        elif device_type not in ["xpu"]:
+        elif device_type not in ["xpu", "habana"]:
             docker_args += ["--gpus", "all"]
 
         if "HABANA_VISIBLE_DEVICES" in env:
@@ -248,7 +250,7 @@ def run():
         docker_run += Docker.device_specific_args(device_type)
         docker_run += [image_name]
         docker_run += ["tail", "-f", "/dev/null"]
-
+        
         Command.run_with_progress(docker_run)
 
 
