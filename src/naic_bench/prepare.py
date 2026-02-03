@@ -58,9 +58,16 @@ class BenchmarkPrepare:
             raise RuntimeError(f"Could not find confd directory: {self.confd_dir}")
 
     @classmethod
+    def get_prerequisites(cls):
+        packages = PREREQUISITES
+        package_manager = PackageManagerFactory.get_instance()
+        if package_manager.identifier in packages:
+            return packages[package_manager.identifier]
+
+    @classmethod
     def install_prerequisites(cls):
         package_manager = PackageManagerFactory.get_instance()
-        package_manager.ensure_packages(PREREQUISITES)
+        package_manager.ensure_packages(cls.get_prerequisites())
 
     def prepare(self, benchmark_names: list[str] | None = None):
         benchmarks = BenchmarkSpec.all_as_list(confd_dir=self.confd_dir, data_dir=self.data_dir)

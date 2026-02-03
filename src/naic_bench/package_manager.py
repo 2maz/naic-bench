@@ -28,11 +28,8 @@ class PackageManager(ABC):
     def install(self) -> bool:
         pass
 
-    def ensure_packages(self, packages: dict[Identifier, list[str]]) -> bool:
-        if self.identifier in packages:
-            prerequisites = packages[self.identifier]
-
-            self.install(prerequisites)
+    def ensure_packages(self, packages: list[str]) -> bool:
+        self.install(packages)
 
 class AptPackageManager(PackageManager):
     @property

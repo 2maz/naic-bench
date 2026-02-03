@@ -14,6 +14,12 @@ class PrepareParser(BaseParser):
         parser.add_argument("--benchmarks-dir", required=True, default=None, type=str)
         parser.add_argument("--confd-dir", default=None, type=str)
 
+        parser.add_argument("--no-deps",
+                action="store_true",
+                default=False,
+                help="Do not force installation of prerequisites, assuming that they have already been installed"
+        )
+
         parser.add_argument("--benchmark",
                 nargs="+",
                 type=str,
@@ -28,6 +34,9 @@ class PrepareParser(BaseParser):
                 benchmarks_dir=args.benchmarks_dir,
                 confd_dir=args.confd_dir)
 
-        bp.install_prerequisites()
+        if args.no_deps:
+            print(f"Assuming the following packages are already available: {','.join(bp.get_prerequisites())}")
+        else:
+            bp.install_prerequisites()
 
         bp.prepare(args.benchmark)
