@@ -12,10 +12,12 @@ pytorch:
       throughput:
         pattern: "Training throughput\\s*:\\s*([0-9e\\.+]+)"
     variants:
-      fp16:
+      fp16_amp_pytorch:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
-          size_1gb: 0.25
+          # batch size 30 for A40 using amp: pytorch
+          # size_1gb: 0.25
+          size_1gb: 0.68
           multiple_pu_scaling_factor: 1.0
           apply_via: --batch_size
         arguments:
@@ -42,10 +44,41 @@ pytorch:
           affinity: disabled
           cuda:
           fp16:
+      fp16_amp_apex:
+        base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
+        batch_size:
+          # batch size 40 for A40 using amp: apex
+          size_1gb: 0.9
+          multiple_pu_scaling_factor: 1.0
+          apply_via: --batch_size
+        arguments:
+          work_dir: "{{TMP_DIR}}"
+          data: "{{DATA_DIR}}/transformer-xl/wikitext-103"
+          max_step: 400
+          dataset: wt103
+          n_layer: 18
+          d_model: 1024
+          n_head: 16
+          d_head: 64
+          d_inner: 4096
+          dropout: 0.2
+          dropatt: 0.2
+          optim: adam
+          lr: 0.0
+          warmup_step: 16000
+          tgt_len: 256
+          mem_len: 256
+          eval_tgt_len: 128
+          eval_interval: 5000
+          no_eval:
+          amp: apex
+          affinity: disabled
+          cuda:
+          fp16:
       fp32:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
-          size_1gb: 0.125
+          size_1gb: 0.425
           multiple_pu_scaling_factor: 1.0
           apply_via: --batch_size
         arguments:
