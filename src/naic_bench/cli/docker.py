@@ -92,13 +92,13 @@ class Docker:
             docker_args += ["-e", f"CUDA_VISIBLE_DEVICES={env['CUDA_VISIBLE_DEVICES']}"]
             if device_type.startswith("nvidia"):
                 if 'nvidia' in cls.runtimes():
-                    docker_args = ["--runtime", "nvidia"]
+                    docker_args += ["--runtime", "nvidia"]
                 else:
                     uuids = device_uuids_nvidia()
                     device_list = f"device={','.join(uuids)}"
-                    docker_args = ["--gpus", f'"{device_list}"']
+                    docker_args += ["--gpus", f'"{device_list}"']
             else:
-                docker_args = ["--gpus", "all"]
+                docker_args += ["--gpus", "all"]
         elif device_type not in ["xpu", "habana"]:
             docker_args += ["--gpus", "all"]
 
