@@ -131,7 +131,7 @@ class Command:
                         print(output_line, flush=True, file=sys.stderr)
                         stderr.append(output_line)
 
-                time.sleep(0.1)
+                time.sleep(0.05)
 
             end_time = dt.datetime.now(tz=dt.timezone.utc)
 
