@@ -15,7 +15,8 @@ pytorch:
       fp16:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
-          size_1gb: 1.0
+          # A40
+          size_1gb: 1.4
           multiple_pu_scaling_factor: 1.0
           apply_via: --batch_size
         arguments:
@@ -48,7 +49,8 @@ pytorch:
       fp32:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
-          size_1gb: 0.5
+          # A40
+          size_1gb: 0.95
           multiple_pu_scaling_factor: 1.0
           apply_via: --batch_size
         arguments:

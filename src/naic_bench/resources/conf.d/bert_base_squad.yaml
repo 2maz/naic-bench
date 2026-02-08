@@ -2,7 +2,6 @@ pytorch:
   bert_base_squad:
     repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
-      branch: lambda/benchmark
     osdeps:
       apt:
         python3-venv

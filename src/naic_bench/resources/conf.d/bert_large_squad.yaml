@@ -15,7 +15,7 @@ pytorch:
         pattern: "training_sequences_per_second\\s*:\\s*([0-9e+\\.]+)"
     variants:
       fp16:
-        base_dir: LanguageModeling/BERT
+        base_dir: PyTorch/LanguageModeling/BERT
         batch_size:
           size_1gb: 0.7
           apply_via: --train_batch_size
@@ -38,7 +38,7 @@ pytorch:
           max_steps: 100
           json-summary: "{{TMP_DIR}}/dllogger-summary.json"
       fp32:
-        base_dir: LanguageModeling/BERT
+        base_dir: PyTorch/LanguageModeling/BERT
         batch_size:
           size_1gb: 0.7
           apply_via: --train_batch_size
