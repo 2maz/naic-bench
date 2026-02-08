@@ -78,6 +78,7 @@ test = [
 [project.scripts]
 naic-bench = "naic_bench.cli.main:run"
 naic-bench-docker = "naic_bench.cli.docker:run"
+naic-bench-singularity = "naic_bench.cli.singularity:run"
 
 [tool.mypy]
 ignore_missing_imports = true

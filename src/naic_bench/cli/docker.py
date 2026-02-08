@@ -159,6 +159,114 @@ class Docker:
         result = Command.run(["docker", "inspect", "-f", "{{.State.Running}}", name])
         return result == "true"
 
+    @classmethod
+    def image_name(cls, device_type: str) -> str:
+        return f"naic-bench/{device_type}-{platform.machine()}"
+
+    @classmethod
+    def dockerfile(cls, device_type: str) -> Path:
+        return Path(__file__).parent.parent / "resources" / "docker" / f"Dockerfile.{device_type}"
+
+def _run(
+        data_dir: Path | str,
+        cpus: int,
+        shm_size: int,
+        rebuild: bool,
+        restart: bool,
+        device_type: str,
+        container_name: str,
+        exec_args: list[str]
+):
+    image_name = Docker.image_name(device_type=device_type)
+    dockerfile = Docker.dockerfile(device_type=device_type)
+
+    if not dockerfile.exists():
+        raise RuntimeError(f"Dockerfile {dockerfile} not found")
+
+    build = False
+    start = False
+
+    docker = Docker()
+    image = docker.image(image_name)
+
+    if container_name is None:
+        container_name = f"naic-bench-{device_type}"
+
+    container = docker.container(container_name)
+
+    if not image:
+        build = True
+        start = True
+    elif not container:
+        start = True
+    elif rebuild:
+        logger.info(f"docker: rebuild requested - stopping and removing container '{container.name}'")
+        container.stop()
+        try:
+            container.remove()
+        except (NotFound, APIError):
+            pass
+        build = True
+        start = True
+    elif restart:
+        logger.info(f"docker: restart requested - stopping and removing container '{container.name}'")
+        container.stop()
+        try:
+            container.remove()
+        except (NotFound, APIError):
+            pass
+        start = True
+    elif container.status == "running":
+        print(f"Docker container '{container_name}' exists - reusing")
+    elif not container.status == "running":
+        print(f"Container {container_name} exists - but status={container.status}")
+        print(f"Please remove the container first: docker rm {container_name} or call with --restart")
+        sys.exit(10)
+
+    Command.find(command="docker", do_throw=True)
+
+    if build:
+        Command.run_with_progress(["docker", "build", "--no-cache", "-t", image_name, "-f", str(dockerfile), dockerfile.parent])
+
+    if start:
+        # start the container with the correct mounted volumes
+        docker_run = ["docker", "run", "-d", "--name", container_name]
+        if data_dir:
+            docker_run += ["-v", f"{Path(data_dir).resolve()}:/data"]
+        docker_run += Docker.default_args(cpus=cpus, shm_size=shm_size)
+
+        docker_run += Docker.device_specific_args(device_type)
+        docker_run += [image_name]
+        docker_run += ["tail", "-f", "/dev/null"]
+
+        Command.run_with_progress(docker_run)
+
+
+    container = docker.container(container_name)
+    mounts = container.attrs["Mounts"]
+    if mounts:
+        print("    mounted:")
+        [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
+    print()
+
+    if exec_args:
+        container = docker.container(container_name)
+        mounts = container.attrs["Mounts"]
+        if mounts:
+            print("    mounted:")
+            [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
+        print()
+
+        docker_exec = ["docker", "exec", container_name]
+        docker_exec += exec_args
+        Command.run_with_progress(docker_exec)
+    else:
+        print("No command provide to execute in docker: if required append '-- <command>'")
+        docker_exec = ["docker", "exec", "-it", container_name, "bash" ]
+        print(f"Entering container '{container_name}' in interactive mode (quit with CTRL-D)")
+        subprocess.run(' '.join(docker_exec), shell=True)
+
+
 def run():
     basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
@@ -187,97 +295,14 @@ def run():
     if options and options[0] == "--":
         exec_args = options[1:]
 
-    device_type = args.device_type
-
-    image_name = f"naic-bench/{device_type}-{platform.machine()}"
-    dockerfile = Path(__file__).parent.parent / "resources" / "docker" / f"Dockerfile.{device_type}"
-    if not dockerfile.exists():
-        raise RuntimeError(f"Dockerfile {dockerfile} not found")
-
-    build = False
-    start = False
-
-    docker = Docker()
-    image = docker.image(image_name)
-
-    container_name = args.container
-    if container_name is None:
-        container_name = f"naic-bench-{args.device_type}"
-
-    container = docker.container(container_name)
-
-    if not image:
-        build = True
-        start = True
-    elif not container:
-        start = True
-    elif args.rebuild:
-        logger.info(f"docker: rebuild requested - stopping and removing container '{container.name}'")
-        container.stop()
-        try:
-            container.remove()
-        except (NotFound, APIError):
-            pass
-        build = True
-        start = True
-    elif args.restart:
-        logger.info(f"docker: restart requested - stopping and removing container '{container.name}'")
-        container.stop()
-        try:
-            container.remove()
-        except (NotFound, APIError):
-            pass
-        start = True
-    elif container.status == "running":
-        print(f"Docker container '{container_name}' exists - reusing")
-    elif not container.status == "running":
-        print(f"Container {container_name} exists - but status={container.status}")
-        print(f"Please remove the container first: docker rm {container_name} or call with --restart")
-        sys.exit(10)
-
-    Command.find(command="docker", do_throw=True)
-
-    if build:
-        Command.run_with_progress(["docker", "build", "--no-cache", "-t", image_name, "-f", str(dockerfile), dockerfile.parent])
-
-    if start:
-        # start the container with the correct mounted volumes
-        docker_run = ["docker", "run", "-d", "--name", container_name]
-        if args.data_dir:
-            docker_run += ["-v", f"{Path(args.data_dir).resolve()}:/data"]
-        docker_run += Docker.default_args(cpus=args.cpus, shm_size=args.shm_size)
-
-        docker_run += Docker.device_specific_args(device_type)
-        docker_run += [image_name]
-        docker_run += ["tail", "-f", "/dev/null"]
-        
-        Command.run_with_progress(docker_run)
-
-
-    container = docker.container(container_name)
-    mounts = container.attrs["Mounts"]
-    if mounts:
-        print("    mounted:")
-        [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
-    print()
-
-    if exec_args:
-        container = docker.container(container_name)
-        mounts = container.attrs["Mounts"]
-        if mounts:
-            print("    mounted:")
-            [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
-        print()
-
-        docker_exec = ["docker", "exec", container_name]
-        docker_exec += exec_args
-        Command.run_with_progress(docker_exec)
-    else:
-        print("No command provide to execute in docker: if required append '-- <command>'")
-        docker_exec = ["docker", "exec", "-it", container_name, "bash" ]
-        print(f"Entering container '{container_name}' in interactive mode (quit with CTRL-D)")
-        subprocess.run(' '.join(docker_exec), shell=True)
-
+    _run(device_type=args.device_type,
+         container_name=args.container,
+         rebuild=args.rebuild,
+         restart=args.restart,
+         data_dir=args.data_dir,
+         cpus=args.cpus,
+         shm_size=args.shm_size,
+         exec_args=exec_args)
 
 if __name__ == "__main__":
     run()
