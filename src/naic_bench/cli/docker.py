@@ -22,6 +22,7 @@ logger.setLevel(logging.INFO)
 # Dockerfile.<devicetype>
 DOCKER_DEVICE_TYPE_ARGS = {
     'nvidia': [],
+    'nvidia-volta': [],
     'habana': [
         "--runtime", "habana",
         "-e", "OMPI_MCA_btl_vader_single_copy_mechanism=none",
