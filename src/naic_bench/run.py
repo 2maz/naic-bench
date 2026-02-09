@@ -136,7 +136,6 @@ class BenchmarkRunner:
                 print(".", end='')
                 time.sleep(1)
             print(f"BenchmarkRunner {benchmark_name}|{variant}: Grace period: completed")
-
         return reports
 
     def execute(self,

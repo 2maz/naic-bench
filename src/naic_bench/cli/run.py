@@ -4,6 +4,8 @@ import logging
 from naic_bench.cli.base import BaseParser
 from naic_bench.run import BenchmarkRunner
 
+import subprocess
+
 logger = logging.getLogger(__name__)
 
 class RunParser(BaseParser):
@@ -53,6 +55,10 @@ class RunParser(BaseParser):
                 gpu_count=args.gpu_count,
                 recreate_venv=args.recreate_venv
         )
+
+        if not reports:
+            print("Apparently there was nothing to run. Available benchmarks are:")
+            subprocess.run("naic-bench show --compact", shell=True)
 
         for report in reports:
             print(report)
