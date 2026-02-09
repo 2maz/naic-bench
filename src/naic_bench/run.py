@@ -96,7 +96,7 @@ class BenchmarkRunner:
             variants: list[str] = [],
             device_type: str = "cpu",
             gpu_count: int = 1,
-            cpu_count: int | None = os.cpu_count(),
+            cpu_count: int | None = None,
             timeout_in_s: int = 3600,
             grace_period_in_s: int = 30,
             recreate_venv: bool = False):
@@ -144,13 +144,15 @@ class BenchmarkRunner:
             variant: str,
             device_type: str = "cpu",
             gpu_count: int = 1,
-            cpu_count: int | None = os.cpu_count(),
+            cpu_count: int | None = None,
             timeout_in_s: int = 3600,
             recreate_venv: bool = False):
         config = self.benchmark_specs[framework][name][variant]
         config.expand_placeholders(GPU_COUNT=gpu_count)
-        if cpu_count is not None:
-            config.expand_placeholders(CPU_COUNT=cpu_count)
+        if cpu_count is None:
+            cpu_count = os.cpu_count()
+
+        config.expand_placeholders(CPU_COUNT=cpu_count)
 
         clone_target_path = config.git_target_dir(self.benchmarks_dir)
         benchmark_dir = clone_target_path / config.base_dir
