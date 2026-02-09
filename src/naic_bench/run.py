@@ -146,7 +146,8 @@ class BenchmarkRunner:
             gpu_count: int = 1,
             cpu_count: int | None = None,
             timeout_in_s: int = 3600,
-            recreate_venv: bool = False):
+            recreate_venv: bool = False
+     ):
         config = self.benchmark_specs[framework][name][variant]
         config.expand_placeholders(GPU_COUNT=gpu_count)
         if cpu_count is None:

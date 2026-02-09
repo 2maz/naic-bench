@@ -9,12 +9,12 @@ from pydantic import BaseModel, Field, computed_field, SkipValidation
 from pydantic_settings import BaseSettings
 from typing import Any
 from typing_extensions import Annotated
-import tempfile
 import re
 import math
 import platform
 
 from naic_bench.package_manager import PackageManager
+from naic_bench.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -227,7 +227,7 @@ class BenchmarkSpec(BaseSettings):
     @computed_field
     @property
     def temp_dir(self) -> Path:
-        temp_dir = Path(tempfile.gettempdir())/ f"{self.identifier}"
+        temp_dir = Config.output_base_dir / f"{self.identifier}"
         temp_dir.mkdir(parents=True, exist_ok=True)
         return temp_dir
 

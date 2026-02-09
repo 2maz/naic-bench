@@ -1,10 +1,12 @@
 from argparse import ArgumentParser
 import logging
+from pathlib import Path
+import subprocess
 
 from naic_bench.cli.base import BaseParser
 from naic_bench.run import BenchmarkRunner
+from naic_bench.config import Config
 
-import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +42,15 @@ class RunParser(BaseParser):
                             help="Force the recreation of any related venv for the benchmarks"
         )
 
+        parser.add_argument("--output-base-dir",
+                            default=None,
+                            help="Define the base/root folder for benchmark outputs")
+
     def execute(self, args):
         super().execute(args)
+
+        if args.output_base_dir:
+            Config.output_base_dir = Path(args.output_base_dir).resolve()
 
         runner = BenchmarkRunner(
                 data_dir=args.data_dir,
