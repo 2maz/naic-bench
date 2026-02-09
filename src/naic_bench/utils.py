@@ -2,9 +2,7 @@ import datetime as dt
 import subprocess
 import logging
 import os
-import psutil
 import selectors
-import signal
 import shutil
 import sys
 import time

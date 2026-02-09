@@ -1,11 +1,8 @@
 from rich import print as print
 from argparse import ArgumentParser
 from pathlib import Path
-import platform
-import os
 import re
 import subprocess
-import sys
 
 import logging
 from logging import basicConfig, getLogger
@@ -44,7 +41,7 @@ def run():
     )
 
     parser.add_argument("--docker-image",
-        help=f"The docker image name, default is 'naic-bench/<device-type>-<arch>'",
+        help="The docker image name, default is 'naic-bench/<device-type>-<arch>'",
         required=False,
         type=str,
         default=None

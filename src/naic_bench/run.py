@@ -8,6 +8,7 @@ import time
 import os
 import platform
 import psutil
+import signal
 import site
 from slurm_monitor.utils.system_info import SystemInfo
 
@@ -169,13 +170,13 @@ class BenchmarkRunner:
                     raise_on_error=False
                  )
         try:
-            process = psutil.Process(result.pid)
+            psutil.Process(result.pid)
             logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: process {result.pid} is still running - trying to kill")
             os.kill(result.pid, signal.SIGKILL)
-        except psutil.NoSuchProcess as e:
+        except psutil.NoSuchProcess:
             # this is how
             pass
-        except OSError as e:
+        except OSError:
             logger.info(f"BenchmarkRunner.execute [{name}|{variant=}]: failed to kill process {result.pid}")
 
         with open(config.temp_dir / "stdout.log", "w") as f:
