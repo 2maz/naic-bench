@@ -3,16 +3,14 @@ pytorch:
     repo:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
     command: >
-      python benchmark-training
+      python main.py
     command_distributed: >
-      python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} main.py --mode benchmark-training
+      python -m torch.distributed.run --nproc_per_node={{GPU_COUNT}} main.py
     prepare:
       data: object_detection.prepare
     metrics:
       throughput:
-        pattern: "^.*Average images/sec:.*$"
-        split_by: ' '
-        match_group_index: -6
+        pattern: "Average images/sec:\\s*([0-9\\.+]+)"
     variants:
       fp32:
         base_dir: PyTorch/Detection/SSD
@@ -21,6 +19,7 @@ pytorch:
           multiple_pu_scaling_factor: 0.6
           apply_via: --batch-size
         arguments:
+          mode: benchmark-training
           data: "{{DATA_DIR}}/object_detection"
           benchmark-warmup: 50
           benchmark-iterations: 200
@@ -34,6 +33,7 @@ pytorch:
           multiple_gpu_scaling_factor: 0.6
           apply_via: --batch-size
         arguments:
+          mode: benchmark-training
           data: "{{DATA_DIR}}/object_detection"
           benchmark-warmup: 50
           benchmark-iterations: 200
