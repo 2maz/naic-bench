@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import logging
 from pathlib import Path
+import platform
 import subprocess
 
 from naic_bench.cli.base import BaseParser
@@ -51,6 +52,7 @@ class RunParser(BaseParser):
 
         if args.output_base_dir:
             Config.output_base_dir = Path(args.output_base_dir).resolve()
+            Config.output_base_dir = Config.output_base_dir / f"{args.framework}-gpus:{args.gpu_count}-node:{platform.node()}"
 
         runner = BenchmarkRunner(
                 data_dir=args.data_dir,
