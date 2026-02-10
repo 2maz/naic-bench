@@ -114,7 +114,6 @@ class Report(BaseModel):
     gpu_count: int
     metrics: dict[str, float]
 
-
     @computed_field
     @property
     def node(self) -> str:

@@ -11,6 +11,7 @@ from naic_bench.cli.base import BaseParser
 from naic_bench.cli.prepare import PrepareParser
 from naic_bench.cli.run import RunParser
 from naic_bench.cli.show import ShowParser
+from naic_bench.cli.report import ReportParser
 
 
 from naic_bench import __version__
@@ -51,6 +52,12 @@ def run():
         subcommand="prepare",
         help="Prepare benchmarks, e.g., downloading data and setting up venvs",
         parser_klass=PrepareParser
+    )
+
+    main_parser.attach_subcommand_parser(
+        subcommand="report",
+        help="Report on available benchmark results",
+        parser_klass=ReportParser
     )
 
     main_parser.attach_subcommand_parser(
