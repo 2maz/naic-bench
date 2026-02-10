@@ -61,7 +61,8 @@ def run():
          exec_args=exec_args,
          docker_image=args.docker_image,
          rebuild=args.rebuild,
-         restart=args.restart
+         restart=args.restart,
+         build_only=args.build_only
     )
 
 def canonized_name(name: str):
