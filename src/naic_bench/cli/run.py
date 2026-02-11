@@ -47,8 +47,8 @@ class RunParser(BaseParser):
                             default=None,
                             help="Define the base/root folder for benchmark outputs")
 
-    def execute(self, args):
-        super().execute(args)
+    def execute(self, args, options):
+        super().execute(args, options)
 
         if args.output_base_dir:
             Config.output_base_dir = Path(args.output_base_dir).resolve()

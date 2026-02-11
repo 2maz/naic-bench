@@ -19,5 +19,5 @@ class BaseParser(ABC):
             "--active_subparser", default=self, action="store", help=argparse.SUPPRESS
         )
 
-    def execute(self, args):
+    def execute(self, args, options = None):
         logger.debug(f"Subparser: {args.active_subparser.__class__.__name__}")

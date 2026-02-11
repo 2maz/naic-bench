@@ -27,8 +27,8 @@ class PrepareParser(BaseParser):
                 help="Benchmark name(s)"
         )
 
-    def execute(self, args):
-        super().execute(args)
+    def execute(self, args, options):
+        super().execute(args, options)
 
         bp = BenchmarkPrepare(data_dir=args.data_dir,
                 benchmarks_dir=args.benchmarks_dir,

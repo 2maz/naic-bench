@@ -8,10 +8,12 @@ import sys
 import traceback as tb
 
 from naic_bench.cli.base import BaseParser
+from naic_bench.cli.docker import DockerParser
 from naic_bench.cli.prepare import PrepareParser
+from naic_bench.cli.report import ReportParser
 from naic_bench.cli.run import RunParser
 from naic_bench.cli.show import ShowParser
-from naic_bench.cli.report import ReportParser
+from naic_bench.cli.singularity import SingularityParser
 
 
 from naic_bench import __version__
@@ -49,6 +51,12 @@ def run():
     main_parser = MainParser(formatter_class=RichHelpFormatter)
 
     main_parser.attach_subcommand_parser(
+        subcommand="docker",
+        help="Prepare and/or use docker image for benchmarking",
+        parser_klass=DockerParser
+    )
+
+    main_parser.attach_subcommand_parser(
         subcommand="prepare",
         help="Prepare benchmarks, e.g., downloading data and setting up venvs",
         parser_klass=PrepareParser
@@ -67,12 +75,18 @@ def run():
     )
 
     main_parser.attach_subcommand_parser(
+        subcommand="singularity",
+        help="Prepare and/or use singularity image for benchmarking",
+        parser_klass=SingularityParser
+    )
+
+    main_parser.attach_subcommand_parser(
         subcommand="show",
         help="Show available benchmark specs",
         parser_klass=ShowParser
     )
 
-    args = main_parser.parse_args()
+    args, options = main_parser.parse_known_args()
 
     if args.version:
         print(__version__)
@@ -84,7 +98,7 @@ def run():
 
     if hasattr(args, "active_subparser"):
         try:
-            getattr(args, "active_subparser").execute(args)
+            getattr(args, "active_subparser").execute(args, options)
         except Exception as e:
             tb.print_tb(e.__traceback__)
             logger.exception(f"Error: {e}")

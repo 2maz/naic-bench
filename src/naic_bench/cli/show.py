@@ -36,8 +36,8 @@ class ShowParser(BaseParser):
             help="Print as: <name of benchmark> : <variant>"
         )
 
-    def execute(self, args):
-        super().execute(args)
+    def execute(self, args, options):
+        super().execute(args, options)
 
         benchmarks = BenchmarkSpec.all_as_list(
                         confd_dir=find_confd(),

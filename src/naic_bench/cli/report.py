@@ -54,8 +54,8 @@ class ReportParser(BaseParser):
                 help="Device types to take into account, default is all"
         )
 
-    def execute(self, args):
-        super().execute(args)
+    def execute(self, args, options):
+        super().execute(args, options)
 
         reports_search_dir = Path(args.output_base_dir)
 
@@ -76,7 +76,10 @@ class ReportParser(BaseParser):
                 reports.append(data)
 
         with open(args.save_as, "w") as f:
+            logger.info(f"Saving reports as {args.save_as}")
             if args.save_as.endswith(".json"):
                 json.dump(reports, f)
             elif args.save_as.endswith(".yaml"):
                 yaml.dump(reports, f)
+            else:
+                print("Could not save {args.save_as}. Unknown output format")
