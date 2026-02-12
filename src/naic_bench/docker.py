@@ -161,7 +161,7 @@ class Docker:
 
     @classmethod
     def dockerfile(cls, device_type: str) -> Path:
-        return Path(__file__).parent.parent / "resources" / "docker" / f"Dockerfile.{device_type}"
+        return Path(__file__).parent / "resources" / "docker" / f"Dockerfile.{device_type}"
 
     @classmethod
     def run(cls,

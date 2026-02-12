@@ -168,7 +168,7 @@ def pipe_has_data(pipe, selector) -> bool:
 def find_confd() -> Path | None:
     hints = [
         Path() / "conf.d",
-        Path(__file__).parent / "resources" / "conf.d"
+        Path(__file__).parent.parent / "resources" / "conf.d"
     ]
 
     for hint in hints:

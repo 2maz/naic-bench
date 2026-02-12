@@ -45,7 +45,7 @@ class Singularity:
         dockerfile = cli_docker.Docker.dockerfile(device_type=device_type)
 
         logger.info(f"Building docker image '{docker_image}' from '{dockerfile}'")
-        Command.run_with_progress(["docker", "build", "--no-cache", "-t", docker_image, "-f", str(dockerfile), dockerfile.parent])
+        Command.run_with_progress(["docker", "build", "--no-cache", "-t", docker_image, "-f", str(dockerfile), str(dockerfile.parent)])
 
         canonized_docker_name = canonized_name(docker_image)
 
