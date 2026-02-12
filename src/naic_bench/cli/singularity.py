@@ -14,7 +14,11 @@ class SingularityParser(BaseParser):
     def __init__(self, parser: ArgumentParser):
         super().__init__(parser=parser)
 
-        parser.add_argument("--rebuild", action="store_true", default=False)
+        parser.add_argument("--rebuild-all", action="store_true", default=False,
+                help="Rebuild both docker and then the sinularity image from the docker")
+        parser.add_argument("--rebuild-singularity", action="store_true", default=False, 
+                help="Rebuild only the singularity image from the existing docker")
+
         parser.add_argument("--build-only", action="store_true", default=False,
                 help="Build only the singularity (*.sif) image")
         parser.add_argument("--restart", action="store_true", default=False,
@@ -50,6 +54,9 @@ class SingularityParser(BaseParser):
         if options and options[0] == "--":
             exec_args = options[1:]
 
+        rebuild_docker = args.rebuild_all
+        rebuild_singularity = args.rebuild_all or args.rebuild_singularity
+
         Singularity.run(
              image_name=args.sif_image,
              instance_name=args.instance_name,
@@ -57,7 +64,8 @@ class SingularityParser(BaseParser):
              data_dir=args.data_dir,
              exec_args=exec_args,
              docker_image=args.docker_image,
-             rebuild=args.rebuild,
+             rebuild_singularity=rebuild_singularity,
+             rebuild_docker=rebuild_docker,
              restart=args.restart,
              build_only=args.build_only
         )

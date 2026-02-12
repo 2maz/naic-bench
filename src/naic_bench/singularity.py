@@ -39,13 +39,16 @@ class Singularity:
         Command.run_with_progress(["singularity", "instance", "stop", instance_name])
 
     @classmethod
-    def build(cls, device_type: str, docker_image: str, sif_image: str):
+    def build(cls, device_type: str, sif_image: str, docker_image: str, rebuild_docker: bool = False):
 
         # First we require the docker image to be available / build
         dockerfile = cli_docker.Docker.dockerfile(device_type=device_type)
 
-        logger.info(f"Building docker image '{docker_image}' from '{dockerfile}'")
-        Command.run_with_progress(["docker", "build", "--no-cache", "-t", docker_image, "-f", str(dockerfile), str(dockerfile.parent)])
+        if rebuild_docker:
+            logger.info(f"Building docker image '{docker_image}' from '{dockerfile}'")
+            Command.run_with_progress(["docker", "build", "--no-cache", "-t", docker_image, "-f", str(dockerfile), str(dockerfile.parent)])
+        else:
+            logger.info(f"Skipping building docker image '{docker_image}' from '{dockerfile}'")
 
         canonized_docker_name = canonized_name(docker_image)
 
@@ -58,7 +61,8 @@ class Singularity:
     def run(cls,
          device_type: str,
          data_dir: str,
-         rebuild: bool = False,
+         rebuild_docker: bool = False,
+         rebuild_singularity: bool = False,
          restart: bool = False,
          image_name: str | None = None,
          exec_args: str | None = None,
@@ -89,10 +93,12 @@ class Singularity:
             Singularity.stop(instance_name)
             start = True
 
-        if rebuild:
-            Singularity.build(device_type=device_type,
+        if rebuild_docker or rebuild_singularity:
+            Singularity.build(
+                    device_type=device_type,
                     docker_image=docker_image,
-                    sif_image=image_name
+                    sif_image=image_name,
+                    rebuild_docker=rebuild_docker
             )
 
         if build_only:
