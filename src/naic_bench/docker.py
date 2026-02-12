@@ -32,9 +32,9 @@ DOCKER_DEVICE_TYPE_ARGS = {
     ],
     'rocm': [
         "--cap-add","SYS_PTRACE",
-        "--security-opt", "seccomp=unconfined"
+        "--security-opt", "seccomp=unconfined",
         "--device", "/dev/kfd",
-        "--device", "/dev/dri"
+        "--device", "/dev/dri",
         "--group-add", "video",
         "--ipc", "host"
     ],
@@ -93,9 +93,9 @@ class Docker:
                     uuids = gpus.Nvidia.device_uuids_nvidia()
                     device_list = f"device={','.join(uuids)}"
                     docker_args += ["--gpus", f'"{device_list}"']
-            else:
+            elif device_type not in ["rocm", "xpu", "habana"]:
                 docker_args += ["--gpus", "all"]
-        elif device_type not in ["xpu", "habana"]:
+        elif device_type not in ["rocm", "xpu", "habana"]:
             docker_args += ["--gpus", "all"]
 
         if "HABANA_VISIBLE_DEVICES" in env:
