@@ -51,12 +51,15 @@ class Singularity:
             logger.info(f"Skipping building docker image '{docker_image}' from '{dockerfile}'")
 
         canonized_docker_name = canonized_name(docker_image)
-
+    
         # Export the docker image to tar / archive
+        logger.info("Exporting docker to '{canonized_docker_name}.tar'")
         Command.run_with_progress(["docker", "save", "-o", f"{canonized_docker_name}.tar", docker_image])
 
         # Convert archive to sif format
+        logger.info(f"Creating singularity image {sif_image} from '{canonized_docker_name}.tar'")
         Command.run_with_progress(["singularity", "build", sif_image, f"docker-archive://{canonized_docker_name}.tar"])
+
     @classmethod
     def run(cls,
          device_type: str,
@@ -88,7 +91,7 @@ class Singularity:
             if not Path(image_name).exists():
                 rebuild = True
 
-        if instance_running and restart:
+        if instance_running and (restart or rebuild_singularity):
             logger.info("singularity: restart requested")
             Singularity.stop(instance_name)
             start = True

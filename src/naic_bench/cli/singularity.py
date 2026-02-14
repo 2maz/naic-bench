@@ -16,7 +16,7 @@ class SingularityParser(BaseParser):
 
         parser.add_argument("--rebuild-all", action="store_true", default=False,
                 help="Rebuild both docker and then the sinularity image from the docker")
-        parser.add_argument("--rebuild-singularity", action="store_true", default=False, 
+        parser.add_argument("--rebuild-singularity", action="store_true", default=False,
                 help="Rebuild only the singularity image from the existing docker")
 
         parser.add_argument("--build-only", action="store_true", default=False,
