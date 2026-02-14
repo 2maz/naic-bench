@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 import logging
 from pathlib import Path
 import platform
+
+from slurm_monitor.utils.system_info import SystemInfo
 import subprocess
 
 from naic_bench.cli.base import BaseParser
@@ -49,6 +51,12 @@ class RunParser(BaseParser):
 
     def execute(self, args, options):
         super().execute(args, options)
+
+        if args.gpu_count > 0:
+            si = SystemInfo()
+            if si.gpu_info.count < args.gpu_count:
+                print(f"There are less gpus available than requested: {si.gpu_info.count} vs. {args.gpu_count}")
+                return
 
         if args.output_base_dir:
             Config.output_base_dir = Path(args.output_base_dir).resolve()
