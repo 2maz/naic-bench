@@ -28,6 +28,7 @@ class MainParser(ArgumentParser):
         self.description = "naic-bench - benchmarking GPU-based system"
         self.add_argument("--log-level", type=str, default="INFO", help="Logging level")
         self.add_argument("--version", "-i", action="store_true", help="Show version")
+        self.add_argument("--verbose", default=False, action="store_true", help="Show verbose information, including error traceback")
 
     def attach_subcommand_parser(
         self, subcommand: str, help: str, parser_klass: BaseParser
@@ -43,7 +44,6 @@ class MainParser(ArgumentParser):
 
 def run():
     basicConfig(
-        format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
         handlers=[RichHandler(rich_tracebacks=True)]
     )
@@ -100,8 +100,10 @@ def run():
         try:
             getattr(args, "active_subparser").execute(args, options)
         except Exception as e:
-            tb.print_tb(e.__traceback__)
-            logger.exception(f"Error: {e}")
+            if args.verbose:
+                logger.exception(f"Error: {e}")
+            else:
+                print(f"Error: {e}")
             sys.exit(-1)
     else:
         main_parser.print_help()
