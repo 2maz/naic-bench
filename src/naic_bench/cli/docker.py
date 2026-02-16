@@ -7,6 +7,7 @@ import os
 
 from naic_bench.cli.base import BaseParser
 from naic_bench.docker import Docker
+from naic_bench.utils import Command
 
 logger = getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -37,6 +38,8 @@ class DockerParser(BaseParser):
         exec_args = options
         if options and options[0] == "--":
             exec_args = options[1:]
+
+        Command.find(command="docker", do_throw=True)
 
         Docker.run(
              device_type=args.device_type,

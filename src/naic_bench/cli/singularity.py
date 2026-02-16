@@ -6,6 +6,7 @@ from logging import getLogger
 
 from naic_bench.cli.base import BaseParser
 from naic_bench.singularity import Singularity
+from naic_bench.utils import Command
 
 logger = getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -56,6 +57,8 @@ class SingularityParser(BaseParser):
 
         rebuild_docker = args.rebuild_all
         rebuild_singularity = args.rebuild_all or args.rebuild_singularity
+
+        Command.find(command="singularity", do_throw=True)
 
         Singularity.run(
              image_name=args.sif_image,
