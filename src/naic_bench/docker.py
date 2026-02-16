@@ -170,15 +170,38 @@ class Docker:
             shm_size: int,
             rebuild: bool,
             restart: bool,
-            device_type: str,
             container_name: str,
-            exec_args: list[str]
+            exec_args: list[str],
+            device_type: str | None = None
     ):
-        image_name = Docker.image_name(device_type=device_type)
-        dockerfile = Docker.dockerfile(device_type=device_type)
 
-        if not dockerfile.exists():
-            raise RuntimeError(f"Dockerfile {dockerfile} not found")
+        image_name = Docker.image_name(device_type=device_type)
+
+        docker_suffixes = []
+        device_type_auto, device_architecture = gpus.GPU.get_device_type()
+        logger.info(f"Autodetected GPU: {device_type_auto} (arch: {device_architecture})")
+
+        if device_type is None:
+            if device_architecture:
+                docker_suffixes += [f"{device_type_auto}-{device_architecture}"]
+            docker_suffixes += [device_type_auto]
+        else:
+            if not device_type.startswith(device_type_auto):
+                # This is a valid use case, e.g., to build an image for a specific device type which
+                # is not attached to the current system, hence only warn about it
+                logger.warning(f"Manually selected device type is '{device_type}', but autodetected '{device_type_auto}'")
+
+            docker_suffixes = [device_type]
+
+        found = False
+        for i in docker_suffixes:
+            dockerfile = Docker.dockerfile(device_type=i)
+            if dockerfile.exists():
+                found = True
+                break
+
+        if not found:
+            raise RuntimeError(f"Dockerfile not found, tried suffixes: {','.join(docker_suffixes)}")
 
         build = False
         start = False

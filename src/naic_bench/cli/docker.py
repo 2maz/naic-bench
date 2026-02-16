@@ -20,7 +20,7 @@ class DockerParser(BaseParser):
         parser.add_argument("--rebuild", action="store_true", default=False)
         parser.add_argument("--restart", action="store_true", default=False)
 
-        parser.add_argument("--device-type", required=True, type=str, default=None)
+        parser.add_argument("--device-type", required=False, type=str, default=None)
         parser.add_argument("--container",
             help="The container name, default is 'naic-bench-<device-type>'",
             required=False,

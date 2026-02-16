@@ -5,7 +5,6 @@ from rich import print as print
 from rich.logging import RichHandler
 from rich_argparse import RichHelpFormatter
 import sys
-import traceback as tb
 
 from naic_bench.cli.base import BaseParser
 from naic_bench.cli.docker import DockerParser
