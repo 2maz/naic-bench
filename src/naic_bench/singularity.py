@@ -51,7 +51,7 @@ class Singularity:
             logger.info(f"Skipping building docker image '{docker_image}' from '{dockerfile}'")
 
         canonized_docker_name = canonized_name(docker_image)
-    
+
         # Export the docker image to tar / archive
         logger.info("Exporting docker to '{canonized_docker_name}.tar'")
         Command.run_with_progress(["docker", "save", "-o", f"{canonized_docker_name}.tar", docker_image])
@@ -89,7 +89,7 @@ class Singularity:
         if not instance_running:
             start = True
             if not Path(image_name).exists():
-                rebuild = True
+                rebuild_singularity = True
 
         if instance_running and (restart or rebuild_singularity):
             logger.info("singularity: restart requested")
