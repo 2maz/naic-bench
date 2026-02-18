@@ -158,8 +158,12 @@ class BenchmarkRunner:
         clone_target_path = config.git_target_dir(self.benchmarks_dir)
         benchmark_dir = clone_target_path / config.base_dir
 
-        cmd = config.get_command(device_type=device_type, gpu_count=gpu_count)
-        logger.info(f"Execute: {cmd} in {benchmark_dir=}")
+        si = SystemInfo()
+        gpu_model = si.gpu_info.model
+        gpu_model = 'n/a' if gpu_model is None else gpu_model
+
+        cmd = config.get_command(device_type=device_type, gpu_count=gpu_count, gpu_model=gpu_model)
+        logger.info(f"Execute[{gpu_count=}|model={gpu_model}]: {cmd} in {benchmark_dir=}")
 
         venv = self.prepare_venv(benchmark_name=name, benchmark_dir=benchmark_dir, force=recreate_venv)
 
@@ -186,8 +190,6 @@ class BenchmarkRunner:
         with open(config.temp_dir / "stderr.log", "w") as f:
             for line in result.stderr:
                 f.write(f"{line}\n")
-
-        si = SystemInfo()
 
         with open(config.temp_dir / "system_info.yaml", "w") as f:
             data = dict(si)

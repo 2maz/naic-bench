@@ -17,8 +17,12 @@ pytorch:
         batch_size:
           # batch size 30 for A40 using amp: pytorch
           # size_1gb: 0.25
-          size_1gb: 0.68
-          multiple_pu_scaling_factor: 1.0
+          size_1gb:
+            default: 0.68
+            overrides:
+              xpu: 0.6
+          multiple_gpu_scaling_factor:
+            default: 1.0
           apply_via: --batch_size
         arguments:
           work_dir: "{{TMP_DIR}}"
@@ -44,12 +48,14 @@ pytorch:
           affinity: disabled
           cuda:
           fp16:
-      fp16_amp_apex:
+      fp16_amp_apex: # no usable with xpu
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
           # batch size 40 for A40 using amp: apex
-          size_1gb: 0.9
-          multiple_pu_scaling_factor: 1.0
+          size_1gb:
+            default: 0.9
+          multiple_gpu_scaling_factor:
+            default: 1.0
           apply_via: --batch_size
         arguments:
           work_dir: "{{TMP_DIR}}"
@@ -78,8 +84,12 @@ pytorch:
       fp32:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
-          size_1gb: 0.425
-          multiple_pu_scaling_factor: 1.0
+          size_1gb:
+            default: 0.425
+            overrides:
+              xpu: 0.45
+          multiple_gpu_scaling_factor:
+            default: 1.0
           apply_via: --batch_size
         arguments:
           work_dir: "{{TMP_DIR}}"

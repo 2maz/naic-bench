@@ -20,9 +20,11 @@ pytorch:
       fp16:
         base_dir: PyTorch/LanguageModeling/BERT
         batch_size:
-          size_1gb: 2
+          size_1gb:
+            default: 2
           apply_via: --train_batch_size
         arguments:
+          gpu-count: "{{GPU_COUNT}}"
           fp16:
           do_lower_case:
           bert_model: bert-large-uncased
@@ -43,9 +45,11 @@ pytorch:
       fp32:
         base_dir: PyTorch/LanguageModeling/BERT
         batch_size:
-          size_1gb: 2
+          size_1gb:
+            default: 2
           apply_via: --train_batch_size
         arguments:
+          gpu-count: "{{GPU_COUNT}}"
           do_lower_case:
           bert_model: bert-large-uncased
           max_seq_length: 384

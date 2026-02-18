@@ -5,7 +5,7 @@ import subprocess
 import logging
 import os
 import yaml
-from pydantic import BaseModel, Field, computed_field, SkipValidation
+from pydantic import BaseModel, Extra, Field, computed_field, SkipValidation
 from pydantic_settings import BaseSettings
 from typing import Any
 from typing_extensions import Annotated
@@ -52,17 +52,28 @@ class VirtualEnv(BaseModel):
     def name(self) -> str:
         return self.path.name
 
-class Metric(BaseModel):
+class Metric(BaseModel, extra=Extra.forbid):
     name: str
     pattern: str
     split_by: str | None = Field(default=None)
     match_group_index: int = Field(default=0)
 
+class GPUAttribute(BaseModel, extra=Extra.forbid):
+    default: float = Field(default=1.0, description="Default value that holds if no other device spec is given")
+    overrides: dict[str, float] | None = Field(default=None, description="Overrides by model name or 'device_type'")
 
-class BatchSize(BaseModel):
-    # batch_size for 1GB
-    size_1gb: float
-    multiple_gpu_scaling_factor: float = Field(default=1.0)
+    def get(self, device_type: str | None = None, gpu_model: str | None = None) -> float:
+        if self.overrides:
+            if gpu_model and gpu_model in self.overrides:
+                return self.overrides[gpu_model]
+            if device_type and device_type in self.overrides:
+                return self.overrides[device_type]
+
+        return self.default
+
+class BatchSize(BaseModel, extra=Extra.forbid):
+    size_1gb: GPUAttribute
+    multiple_gpu_scaling_factor: GPUAttribute | None = Field(default=None, description="GPU specific scaling factor when using multiple gpus")
 
     apply_via: str = Field(default="--batch-size")
 
@@ -79,7 +90,7 @@ class BatchSize(BaseModel):
 
         return gpu_size_in_gb
 
-    def estimate(self, gpu_count: int = 0, device_type: str | None = None):
+    def estimate(self, gpu_count: int = 0, device_type: str | None = None, gpu_model: str | None = None):
         if device_type == 'cpu':
             if gpu_count != 0:
                 raise ValueError("If device type is cpu, then gpu_count must be 0")
@@ -88,14 +99,11 @@ class BatchSize(BaseModel):
         else:
             device_memory_in_gb = self.device_memory_in_gb
 
-        batch_size = self.size_1gb * device_memory_in_gb
-        if gpu_count > 1:
-            batch_size = 2*self.multiple_gpu_scaling_factor
-
-        if device_type:
-            # vendor specific corrections (heuristic)
-            if device_type == 'xpu':
-                batch_size *= 0.85
+        batch_size = self.size_1gb.get(device_type=device_type, gpu_model=gpu_model) * device_memory_in_gb
+        if gpu_count > 1 and self.multiple_gpu_scaling_factor:
+            scale_by = self.multiple_gpu_scaling_factor.get(device_type=device_type, gpu_model=gpu_model)
+            logger.info("Assuming global batch size: applying multi-gpu scaling factor to batch: {gpu_count}*{scale_by}")
+            batch_size *= gpu_count*scale_by
 
         return math.ceil(batch_size)
 
@@ -182,17 +190,23 @@ class BenchmarkSpec(BaseSettings):
         elif device_type == "rocm":
             logger.info("gpu_argument: rocm -> use as 'cuda' in torch")
             device_type = "cuda"
-        # enforce autocast for xpu (for nvidia this is not always useful it seems)
-        elif device_type == "xpu":
-            extra_args = "--autocast"
+        ## enforce autocast for xpu (for nvidia this is not always useful it seems)
+        #elif device_type == "xpu":
+        #    logger.warning("Calling autocast for 'xpu'")
+        #    extra_args = "--autocast"
 
         return f"--device-type {device_type} {extra_args}".strip()
 
     def get_command(self, *,
                     gpu_count: int = 0,
-                    device_type: str = "cpu"
+                    device_type: str = "cpu",
+                    gpu_model: str | None = None
         ):
-        cmd = self.command.strip()
+        if gpu_count <= 1:
+            cmd = self.command.strip()
+        else:
+            cmd = self.command_distributed.strip()
+
         for argument_name, argument_value in self.arguments.items():
             if argument_value is not None:
                 cmd += f" --{argument_name} {argument_value}"
@@ -201,7 +215,7 @@ class BenchmarkSpec(BaseSettings):
 
         # Required interface "--device-type <device-type>"
         cmd += f" {self.device_arguments(device_type=device_type)}"
-        cmd += f" {self.batch_size.apply_via} {self.batch_size.estimate(gpu_count=gpu_count, device_type=device_type)}"
+        cmd += f" {self.batch_size.apply_via} {self.batch_size.estimate(gpu_count=gpu_count, device_type=device_type, gpu_model=gpu_model)}"
         return cmd
 
     def get_prepare(self, category: str) -> str:

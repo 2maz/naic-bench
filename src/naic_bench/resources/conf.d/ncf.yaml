@@ -15,8 +15,10 @@ pytorch:
       fp32:
         base_dir: PyTorch/Recommendation/NCF
         batch_size:
-          size_1gb: 80000
-          multiple_pu_scaling_factor: 0.7
+          size_1gb:
+            default: 80000
+          multiple_gpu_scaling_factor:
+            default: 0.7
           apply_via: --batch_size
         arguments:
           data: "{{DATA_DIR}}/ncf/cache/ml-20m"
@@ -25,8 +27,10 @@ pytorch:
       fp16:
         base_dir: PyTorch/Recommendation/NCF
         batch_size:
-          size_1gb: 160000
-          multiple_pu_scaling_factor: 0.7
+          size_1gb:
+            default: 160000
+          multiple_gpu_scaling_factor:
+            default: 0.7
           apply_via: --batch_size
         arguments:
           data: "{{DATA_DIR}}/ncf/cache/ml-20m"

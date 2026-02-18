@@ -17,8 +17,14 @@ pytorch:
       fp32:
         base_dir: PyTorch/Translation/GNMT
         batch_size:
-          size_1gb: 8
-          multiple_gpu_scaling_factor: 0.7
+          #size_1gb: 8
+          # xpu: n022 - 10
+          size_1gb:
+            default: 8
+            overrides:
+              xpu: 10
+          multiple_gpu_scaling_factor:
+            default: 0.7
           apply_via: --train-batch-size
         arguments:
           dataset-dir: "{{DATA_DIR}}/gnmt/wmt16_de_en"
@@ -30,10 +36,13 @@ pytorch:
       fp16:
         base_dir: PyTorch/Translation/GNMT
         batch_size:
-          size_1gb: 10
-          multiple_gpu_scaling_factor: 0.7
+          size_1gb:
+            default: 10
+          multiple_gpu_scaling_factor:
+            default: 0.7
           apply_via: --train-batch-size
         arguments:
+          affinity: 'disabled'
           dataset-dir: "{{DATA_DIR}}/gnmt/wmt16_de_en"
           math: fp16
           epochs: 2

@@ -15,8 +15,10 @@ pytorch:
       fp32:
         base_dir: PyTorch/SpeechSynthesis/Tacotron2
         batch_size:
-          size_1gb: 3
-          multiple_pu_scaling_factor: 0.6
+          size_1gb:
+            default: 3
+          multiple_gpu_scaling_factor:
+            default: 0.6
           apply_via: --batch-size
         arguments:
           o: "{{TMP_DIR}}"
@@ -33,8 +35,10 @@ pytorch:
       fp16:
         base_dir: PyTorch/SpeechSynthesis/Tacotron2
         batch_size:
-          size_1gb: 6
-          multiple_pu_scaling_factor: 0.6
+          size_1gb:
+            default: 6
+          multiple_gpu_scaling_factor:
+            default: 0.6
           apply_via: --batch-size
         arguments:
           o: "{{TMP_DIR}}"

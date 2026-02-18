@@ -15,9 +15,14 @@ pytorch:
       fp16:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
-          # A40
-          size_1gb: 1.4
-          multiple_pu_scaling_factor: 1.0
+          size_1gb:
+            default: 1.4
+            overrides:
+              xpu: 1.2
+          multiple_gpu_scaling_factor:
+            default: 0.9
+            overrides:
+              xpu: 0.83
           apply_via: --batch_size
         arguments:
           affinity: disabled
@@ -50,8 +55,12 @@ pytorch:
         base_dir: PyTorch/LanguageModeling/Transformer-XL/pytorch
         batch_size:
           # A40
-          size_1gb: 0.95
-          multiple_pu_scaling_factor: 1.0
+          size_1gb:
+            default: 0.95
+          multiple_gpu_scaling_factor:
+            default: 0.9
+            overrides:
+              xpu: 0.83
           apply_via: --batch_size
         arguments:
           affinity: disabled
