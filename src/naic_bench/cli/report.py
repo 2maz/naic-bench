@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from naic_bench.cli.base import BaseParser
+from naic_bench.spec import Report
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ class ReportParser(BaseParser):
 
             with open(benchmark_report, "r") as f:
                 data = yaml.load(f, Loader=yaml.SafeLoader)
+                print(Report(**data))
                 data['system_info'] = system_info
                 reports.append(data)
 
