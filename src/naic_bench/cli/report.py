@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class CustomSafeLoader(yaml.SafeLoader):
     def construct_unknown(self, node):
-        if node.tag == "!!python/object/new:torch.torch_version.TorchVersion":
+        if "torch.torch_version.TorchVersion" in node.tag:
             return node.value[0].value
 
         return None
@@ -77,6 +77,7 @@ class ReportParser(BaseParser):
                 data['system_info'] = system_info
                 reports.append(data)
 
+        logger.info(f"Found {len(reports)} reports")
         with open(args.save_as, "w") as f:
             logger.info(f"Saving reports as {args.save_as}")
             if args.save_as.endswith(".json"):

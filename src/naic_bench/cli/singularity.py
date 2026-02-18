@@ -25,7 +25,7 @@ class SingularityParser(BaseParser):
         parser.add_argument("--restart", action="store_true", default=False,
                 help="Restart the singularity instance")
 
-        parser.add_argument("--device-type", required=True, type=str, default=None)
+        parser.add_argument("--device-type", required=False, type=str, default=None)
         parser.add_argument("--sif-image",
             help="The singularity image name, default is 'naic-bench-<device-type>.sif'",
             required=False,

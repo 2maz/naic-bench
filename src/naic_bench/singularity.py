@@ -6,7 +6,7 @@ import subprocess
 import logging
 from logging import getLogger
 
-import naic_bench.cli.docker as cli_docker
+from naic_bench.docker import Docker
 from naic_bench.utils import Command, canonized_name
 
 logger = getLogger(__name__)
@@ -42,7 +42,7 @@ class Singularity:
     def build(cls, device_type: str, sif_image: str, docker_image: str, rebuild_docker: bool = False):
 
         # First we require the docker image to be available / build
-        dockerfile = cli_docker.Docker.dockerfile(device_type=device_type)
+        dockerfile = Docker.dockerfile(device_type=device_type)
 
         if rebuild_docker:
             logger.info(f"Building docker image '{docker_image}' from '{dockerfile}'")
@@ -53,7 +53,7 @@ class Singularity:
         canonized_docker_name = canonized_name(docker_image)
 
         # Export the docker image to tar / archive
-        logger.info("Exporting docker to '{canonized_docker_name}.tar'")
+        logger.info(f"Exporting docker to '{canonized_docker_name}.tar'")
         Command.run_with_progress(["docker", "save", "-o", f"{canonized_docker_name}.tar", docker_image])
 
         # Convert archive to sif format
@@ -62,8 +62,8 @@ class Singularity:
 
     @classmethod
     def run(cls,
-         device_type: str,
          data_dir: str,
+         device_type: str | None = None,
          rebuild_docker: bool = False,
          rebuild_singularity: bool = False,
          restart: bool = False,
@@ -73,8 +73,11 @@ class Singularity:
          docker_image: str | None = None,
          build_only: bool = False
     ):
+        if not device_type:
+            device_type = Docker.autodetect_device_type()
+
         if not docker_image:
-            docker_image = cli_docker.Docker.image_name(device_type=device_type)
+            docker_image = Docker.image_name(device_type=device_type)
 
         if not instance_name:
             instance_name = f"{canonized_name(docker_image)}"
@@ -117,7 +120,7 @@ class Singularity:
             work_dir.mkdir(parents=True, exist_ok=True)
 
             singularity_run += ["-B", f"{str(work_dir)}:/naic-workspace/writeable"]
-
+            
             if device_type.startswith("nvidia"):
                 singularity_run += [ "--nv"]
 

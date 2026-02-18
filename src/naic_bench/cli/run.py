@@ -32,7 +32,7 @@ class RunParser(BaseParser):
             type=str
         )
         parser.add_argument("--device-type",
-                            required=True,
+                            required=False,
                             help="Device type required: select from 'cpu','cuda','xpu','hpu'",
                             type=str)
 

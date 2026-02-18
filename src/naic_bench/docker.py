@@ -104,6 +104,23 @@ class Docker:
         return docker_args
 
     @classmethod
+    def autodetect_device_type(cls):
+        device_type, device_architecture = gpus.GPU.get_device_type()
+        
+        arch = 'n/a' if not device_architecture else device_architecture
+        logger.info(f"Autodetected GPU: {device_type} (arch: {arch})")
+        if device_architecture:
+            label = f"{device_type}-{device_architecture}"
+            if label in DOCKER_DEVICE_TYPE_ARGS:
+                return label
+        elif device_type in DOCKER_DEVICE_TYPE_ARGS:
+            return device_type
+
+        raise ValueError(f"Detected GPU: {device_type} (arch: {device_architecture} has currently no"
+                f" matching Dockerfile. Supported are {','.join(DOCKER_DEVICE_TYPE_ARGS)}")
+
+
+    @classmethod
     def device_specific_args(cls, device_type: str) -> list[str]:
         """
         Get special docker argument when a docker for a particular device type is requested
@@ -175,33 +192,19 @@ class Docker:
             device_type: str | None = None
     ):
 
+        device_type_auto = cls.autodetect_device_type()
+        if not device_type:
+            device_type = device_type_auto
+        elif device_type != device_type_auto:
+            # This is a valid use case, e.g., to build an image for a specific device type which
+            # is not attached to the current system, hence only warn about it
+            logger.warning(f"Manually selected device type is '{device_type}', but autodetected '{device_type_auto}'")
+
         image_name = Docker.image_name(device_type=device_type)
 
-        docker_suffixes = []
-        device_type_auto, device_architecture = gpus.GPU.get_device_type()
-        logger.info(f"Autodetected GPU: {device_type_auto} (arch: {device_architecture})")
-
-        if device_type is None:
-            if device_architecture:
-                docker_suffixes += [f"{device_type_auto}-{device_architecture}"]
-            docker_suffixes += [device_type_auto]
-        else:
-            if not device_type.startswith(device_type_auto):
-                # This is a valid use case, e.g., to build an image for a specific device type which
-                # is not attached to the current system, hence only warn about it
-                logger.warning(f"Manually selected device type is '{device_type}', but autodetected '{device_type_auto}'")
-
-            docker_suffixes = [device_type]
-
-        found = False
-        for i in docker_suffixes:
-            dockerfile = Docker.dockerfile(device_type=i)
-            if dockerfile.exists():
-                found = True
-                break
-
-        if not found:
-            raise RuntimeError(f"Dockerfile not found, tried suffixes: {','.join(docker_suffixes)}")
+        dockerfile = Docker.dockerfile(device_type=device_type)
+        if not dockerfile:
+            raise RuntimeError(f"Dockerfile {dockerfile} not found")
 
         build = False
         start = False
