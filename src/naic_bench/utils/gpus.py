@@ -17,7 +17,7 @@ class Nvidia:
         """
         result = Command.run(["nvidia-smi", "-q"])
         for line in result.splitlines():
-            m = re.search("Product Architecture\s+:\s+(.*)", line)
+            m = re.search(r"Product Architecture\s+:\s+(.*)", line)
             if m:
                 return m.groups()[0].lower()
 
