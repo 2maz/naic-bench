@@ -127,7 +127,7 @@ class Report(BaseModel):
     def node(self) -> str:
         return platform.node()
 
-class BenchmarkSpec(BaseSettings):
+class BenchmarkSpec(BaseModel):
     name: str
     variant: str
     command: str
