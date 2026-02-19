@@ -106,7 +106,7 @@ class Docker:
     @classmethod
     def autodetect_device_type(cls):
         device_type, device_architecture = gpus.GPU.get_device_type()
-        
+
         arch = 'n/a' if not device_architecture else device_architecture
         logger.info(f"Autodetected GPU: {device_type} (arch: {arch})")
         if device_architecture:

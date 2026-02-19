@@ -66,7 +66,7 @@ The basic outline is:
 ```
 pytorch: # name-of-testing-framework
   my-benchmark: # name of the benchmark
-    repo: 
+    repo:
       url: https://github.com/your-repo/your-benchmark.git # a repository hosting the benchmark
     command: >
       python run.py
@@ -81,7 +81,7 @@ pytorch: # name-of-testing-framework
        fp32:
           base_dir: subfolder_in_repo/my_benchmark/
           batch_size:
-            size_1gb: 
+            size_1gb:
               default: 1
               overrides:
                 xpu: 0.5
@@ -134,8 +134,8 @@ The container contains a prebuild version of naic-bench, where the above mention
 Note, that per default the data-dir is mounted as /data in the container and the working directory is naic-workspace.
 
 ## naic-bench singularity
-Since docker might not be permitted to run on a system that should be benchmark, singularity is an option. 
-The current approach is to build a docker image and create a singularity image from that. 
+Since docker might not be permitted to run on a system that should be benchmark, singularity is an option.
+The current approach is to build a docker image and create a singularity image from that.
 Hence, one might need to you a separate system to build the docker image and derive the singularity image from it.
 The general process is:
 a. create docker image

@@ -120,7 +120,7 @@ class Singularity:
             work_dir.mkdir(parents=True, exist_ok=True)
 
             singularity_run += ["-B", f"{str(work_dir)}:/naic-workspace/writeable"]
-            
+
             if device_type.startswith("nvidia"):
                 singularity_run += [ "--nv"]
 

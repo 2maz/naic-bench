@@ -6,7 +6,6 @@ import logging
 import os
 import yaml
 from pydantic import BaseModel, Extra, Field, computed_field, SkipValidation
-from pydantic_settings import BaseSettings
 from typing import Any
 from typing_extensions import Annotated
 import re
