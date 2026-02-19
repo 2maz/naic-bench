@@ -53,7 +53,11 @@ class SingularityParser(BaseParser):
 
         exec_args = options
         if options and options[0] == "--":
+            # split incase there is a string
             exec_args = options[1:]
+            if len(exec_args) == 1:
+                exec_args = exec_args[0].split(" ")
+
 
         rebuild_docker = args.rebuild_all
         rebuild_singularity = args.rebuild_all or args.rebuild_singularity

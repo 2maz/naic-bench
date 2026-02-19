@@ -38,6 +38,8 @@ class DockerParser(BaseParser):
         exec_args = options
         if options and options[0] == "--":
             exec_args = options[1:]
+            if len(exec_args) == 1:
+                exec_args = exec_args[0].split(" ")
 
         Command.find(command="docker", do_throw=True)
 
