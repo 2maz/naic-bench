@@ -129,7 +129,7 @@ class Singularity:
             Command.run_with_progress(singularity_run)
 
         if exec_args:
-            singularity_exec = ["singularity", "exec", f"instance://{instance_name}"] + exec_args
+            singularity_exec = ["singularity", "exec", "--cwd", "/naic-workspace/writeable", f"instance://{instance_name}"] + exec_args
             Command.run_with_progress(singularity_exec)
         else:
             print("No command provided to execute in singularity: if required append '-- <command>'")
