@@ -8,7 +8,8 @@
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:GPU_COUNT
 
-GPU_TYPE=${1:nvidia}
+GPU_COUNT=
+GPU_TYPE=
 
 echo "Starting job at time:" && date +%Y-%m-%d_%H:%M:%S
 set -x
@@ -18,43 +19,7 @@ NAIC_BASE_DIR=/global/D1/projects/NAIC
 NAIC_DATA_DIR=$NAIC_BASE_DIR/data/lambdal
 NAIC_BENCH_LOGS_DIR=$NAIC_BASE_DIR/software/naic-bench/logs
 
-cd $NAIC_BASE_DIR/software/naic-bench/lambdal
-
-./prepare-slurm-monitor.sh
-. venv-$(uname -m)-slurm-monitor/bin/activate
-
-GPU_COUNT=$(slurm-monitor system-info -q gpus.count)
-export GPU_COUNT
-
-# Select benchmark to avoid running all, e.g.,
-#     PyTorch_base_base_squad_FP16
-BENCHMARK=${BENCHMARK:-all}
-SIF_IMAGE_NAME=naic-benchmark.$GPU_TYPE-$(uname -m).sif
-
-echo "Using all $GPU_COUNT available GPUs"
-echo "Running BENCHMARK=$BENCHMARK"
-
 cd $NAIC_BASE_DIR/software/naic-bench
 
-if [ ! -e $SIF_IMAGE_NAME ]; then
-    echo "singularity image $SIF_IMAGE_NAME is not available (current dir: $PWD)"
-    exit 10
-fi
-
-EXTRA_ARGS=
-DEVICE_MODEL=
-if [ "$GPU_TYPE" == "nvidia" ]; then
-    EXTRA_ARGS="--nv"
-    DEVICE_MODEL=cuda
-elif [ "$GPU_TYPE" == "habana" ]; then
-    EXTRA_ARGS="-B /tmp/var-log-habana-logs/:/var/log/habana_logs"
-    DEVICE_MODEL=hpu
-elif [ "$GPU_TYPE" == "xpu" ]; then
-    DEVICE_MODEL=xpu
-fi
-
-if [ -z "$DEVICE_MODEL" ]; then
-    echo "No device model set."
-fi
-
-singularity exec -B $NAIC_DATA_DIR:/data $EXTRA_ARGS $SIF_IMAGE_NAME bash -c "cd /naic-workspace; ./resources/naic-bench/lambdal/benchmarks.d/lambdal.sh -r -t $BENCHMARK -d $DEVICE_MODEL -n $GPU_COUNT -o $NAIC_BENCH_LOGS_DIR -l ex3"
+. venv-naic-bench-$(uname -m)/bin/activate
+naic-bench singularity --data-dir $NAIC_DATA_DIR -- naic-bench run --data-dir /data --benchmarks-dir benchmarks --gpu-count $GPU_COUNT --device-type $GPU_TYPE --output-base-dir reports-ex3/node-$(hostname)-gpu-$GPU_COUNT --recreate-venv
