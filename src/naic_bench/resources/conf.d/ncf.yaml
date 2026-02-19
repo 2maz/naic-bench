@@ -34,6 +34,7 @@ pytorch:
           apply_via: --batch_size
         arguments:
           data: "{{DATA_DIR}}/ncf/cache/ml-20m"
-          epochs: 2
+          epochs: 10
           log_path: "{{TMP_DIR}}/ncf.log"
           amp:
+          autocast:
