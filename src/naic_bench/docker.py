@@ -113,7 +113,8 @@ class Docker:
             label = f"{device_type}-{device_architecture}"
             if label in DOCKER_DEVICE_TYPE_ARGS:
                 return label
-        elif device_type in DOCKER_DEVICE_TYPE_ARGS:
+
+        if device_type in DOCKER_DEVICE_TYPE_ARGS:
             return device_type
 
         raise ValueError(f"Detected GPU: {device_type} (arch: {device_architecture} has currently no"
