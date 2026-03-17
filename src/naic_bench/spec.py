@@ -140,7 +140,7 @@ class BenchmarkSpec(BaseModel):
     prepare: dict[str, list[str]] = Field(default={})
     metrics: dict[str, Metric] = Field(default={})
 
-    environment: dict[str, str | int] = Field(default={})
+    env_variables: dict[str, str | int] = Field(default={})
     batch_size: BatchSize
     arguments: dict[str, Annotated[Any, SkipValidation]] = Field(default={})
 
@@ -258,8 +258,8 @@ class BenchmarkSpec(BaseModel):
                     benchmark_specs[framework][benchmark_name] = {}
 
                 env = {}
-                if 'environment' in config:
-                    env = config['environment']
+                if 'env_variables' in config:
+                    env = config['env_variables']
 
                 missing_fields = []
                 for f in ['command', 'repo', 'metrics']:
@@ -284,8 +284,8 @@ class BenchmarkSpec(BaseModel):
                     raise RuntimeError(f"No 'variants' found for {benchmark_name}")
 
                 for variant, run_config in config['variants'].items():
-                    if 'environment' not in run_config:
-                        run_config['environment'] = env
+                    if 'env_variables' not in run_config:
+                        run_config['env_variables'] = env
 
                     if 'prepare' in config:
                         prepare = config['prepare']

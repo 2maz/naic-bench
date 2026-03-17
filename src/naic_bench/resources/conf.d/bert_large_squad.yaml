@@ -4,7 +4,7 @@ pytorch:
       url: https://github.com/2maz/naic-DeepLearningExamples.git
     prepare:
       data: bert.prepare
-    environment:
+    env_variables:
       NCCL_P2P_DISABLE: 1
     command: >
       python run_squad.py
