@@ -9,7 +9,7 @@ fi
 
 NODENAME=$1
 GPU_COUNT=${2:-1}
-GPU_TYPE=${3:-nvidia}
+GPU_TYPE=${3:-cuda}
 
 PARTITION=$(scontrol show node $NODENAME | grep Partitions= | sed 's#.*Partitions=##' | cut -d',' -f1)
 
