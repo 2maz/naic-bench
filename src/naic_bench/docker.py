@@ -45,6 +45,9 @@ DOCKER_DEVICE_TYPE_ARGS = {
     ]
 }
 
+# Workspace as used in Dockerfile.<device-type>
+DOCKER_NAIC_WORKSPACE = "/naic-workspace"
+
 class Docker:
     def __init__(self):
         self.client = from_env()

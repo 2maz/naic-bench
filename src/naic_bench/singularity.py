@@ -6,7 +6,7 @@ import subprocess
 import logging
 from logging import getLogger
 
-from naic_bench.docker import Docker
+from naic_bench.docker import Docker, DOCKER_NAIC_WORKSPACE
 from naic_bench.utils import Command, canonized_name
 
 logger = getLogger(__name__)
@@ -43,6 +43,7 @@ class Singularity:
 
         # First we require the docker image to be available / build
         dockerfile = Docker.dockerfile(device_type=device_type)
+        Command.find(command="docker", do_throw=True)
 
         if rebuild_docker:
             logger.info(f"Building docker image '{docker_image}' from '{dockerfile}'")
@@ -88,6 +89,11 @@ class Singularity:
         elif not image_name.endswith(".sif"):
             image_name += ".sif"
 
+        if not Path(image_name).exists():
+            raise RuntimeError(f"Singularity.run: could not find (singularity) image file: {image_name}")
+
+        logger.info(f"singularity: using image {image_name}")
+
         start = False
         if not instance_running:
             start = True
@@ -116,10 +122,10 @@ class Singularity:
             if data_dir:
                 singularity_run += ["-B", f"{Path(data_dir).resolve()}:/data"]
 
-            work_dir = Path("naic-workspace")
+            work_dir = Path(DOCKER_NAIC_WORKSPACE)
             work_dir.mkdir(parents=True, exist_ok=True)
 
-            singularity_run += ["-B", f"{str(work_dir)}:/naic-workspace/writeable"]
+            singularity_run += ["-B", f"{str(work_dir)}:{DOCKER_NAIC_WORKSPACE}/writeable"]
 
             if device_type.startswith("nvidia"):
                 singularity_run += [ "--nv"]
@@ -129,7 +135,7 @@ class Singularity:
             Command.run_with_progress(singularity_run)
 
         if exec_args:
-            singularity_exec = ["singularity", "exec", "--cwd", "/naic-workspace/writeable", f"instance://{instance_name}"] + exec_args
+            singularity_exec = ["singularity", "exec", "--cwd", "${DOCKER_NAIC_WORKSPACE}/writeable", f"instance://{instance_name}"] + exec_args
             Command.run_with_progress(singularity_exec)
         else:
             print("No command provided to execute in singularity: if required append '-- <command>'")
