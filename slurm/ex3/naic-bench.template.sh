@@ -22,4 +22,4 @@ NAIC_BENCH_LOGS_DIR=$NAIC_BASE_DIR/software/naic-bench/logs
 cd $NAIC_BASE_DIR/software/naic-bench
 
 . venv-naic-bench-$(uname -m)/bin/activate
-naic-bench singularity --data-dir $NAIC_DATA_DIR -- naic-bench run --data-dir /data --benchmarks-dir benchmarks --gpu-count $GPU_COUNT --device-type $GPU_TYPE --output-base-dir reports-ex3/node-$(hostname)-gpu-$GPU_COUNT --recreate-venv
+naic-bench singularity --data-dir $NAIC_DATA_DIR -- naic-bench run --data-dir /data --benchmarks-dir benchmarks --gpu-count $GPU_COUNT --device-type $GPU_TYPE --output-base-dir /data/reports-ex3/ --recreate-venv
