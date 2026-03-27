@@ -49,6 +49,10 @@ Once the data has been downloaded, the benchmark can be executed.
 naic-bench run --data-dir data/ --benchmarks-dir benchmarks --confd-dir naic-bench/src/naic_bench/resources/conf.d --benchmark gnmt --variant fp16 --device-type cuda --gpu-count 1
 ```
 
+### Configuration
+
+Basic configuration, e.g., for setting parameter can be done via .env file, e.g., to specify any other that the default use --env-file <filename>.
+
 ### Benchmark Specification
 
 Each benchmark is specified using a yaml file - examples can be found in the [resources/conf.d](https://github.com/2maz/naic-bench/tree/main/src/naic_bench/resources/conf.d) folder, associated with this library.
@@ -96,7 +100,7 @@ pytorch: # name-of-testing-framework
              save: "{{TMP_DIR}}/models"
 ```
 
-#### Using prepare scirpt
+#### Using prepare script
 Running a 'prepare' script, e.g., my-benchmark.prepare will be done with the shell environment variable set:
 
 Environment Variable | Description
