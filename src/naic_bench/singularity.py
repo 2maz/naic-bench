@@ -8,6 +8,7 @@ from logging import getLogger
 
 from naic_bench.docker import Docker, DOCKER_NAIC_WORKSPACE
 from naic_bench.utils import Command, canonized_name
+from naic_bench.settings import Config
 
 logger = getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -45,6 +46,9 @@ class Singularity:
         dockerfile = Docker.dockerfile(device_type=device_type)
         Command.find(command="docker", do_throw=True)
 
+        docker = Docker()
+        rebuild_docker = rebuild_docker or not docker.image(name=docker_image)
+
         if rebuild_docker:
             logger.info(f"Building docker image '{docker_image}' from '{dockerfile}'")
             Command.run_with_progress(["docker", "build", "--no-cache", "-t", docker_image, "-f", str(dockerfile), str(dockerfile.parent)])
@@ -60,6 +64,8 @@ class Singularity:
         # Convert archive to sif format
         logger.info(f"Creating singularity image {sif_image} from '{canonized_docker_name}.tar'")
         Command.run_with_progress(["singularity", "build", sif_image, f"docker-archive://{canonized_docker_name}.tar"])
+        logger.info(f"Removing '{canonized_docker_name}.tar'")
+        Command.run_with_progress(["rm", f"{canonized_docker_name}.tar"])
 
     @classmethod
     def run(cls,
@@ -89,8 +95,12 @@ class Singularity:
         elif not image_name.endswith(".sif"):
             image_name += ".sif"
 
-        if not Path(image_name).exists():
-            raise RuntimeError(f"Singularity.run: could not find (singularity) image file: {image_name}")
+        if not Path(image_name).is_absolute():
+            config = Config.get_instance()
+
+            sif_image_dir = Path(config.sif.image_dir)
+            sif_image_dir.mkdir(exist_ok=True, parents=True)
+            image_name = str(sif_image_dir / image_name)
 
         logger.info(f"singularity: using image {image_name}")
 
@@ -123,6 +133,9 @@ class Singularity:
                 singularity_run += ["-B", f"{Path(data_dir).resolve()}:/data"]
 
             work_dir = Path(DOCKER_NAIC_WORKSPACE)
+            if work_dir.is_absolute():
+                work_dir = Path(str(work_dir)[1:])
+
             work_dir.mkdir(parents=True, exist_ok=True)
 
             singularity_run += ["-B", f"{str(work_dir)}:{DOCKER_NAIC_WORKSPACE}/writeable"]

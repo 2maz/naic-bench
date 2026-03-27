@@ -8,7 +8,7 @@ import subprocess
 
 from naic_bench.cli.base import BaseParser
 from naic_bench.run import BenchmarkRunner
-from naic_bench.config import Config
+from naic_bench.settings import Config
 
 
 logger = logging.getLogger(__name__)
@@ -58,9 +58,11 @@ class RunParser(BaseParser):
                 print(f"There are less gpus available than requested: {si.gpu_info.count} vs. {args.gpu_count}")
                 return
 
+        config = Config.initialize()
+
         if args.output_base_dir:
-            Config.output_base_dir = Path(args.output_base_dir).resolve()
-            Config.output_base_dir = Config.output_base_dir / f"{args.framework}-gpus:{args.gpu_count}-node:{platform.node()}"
+            config.output_base_dir = Path(args.output_base_dir).resolve()
+            config.output_base_dir = Config.output_base_dir / f"{args.framework}-gpus:{args.gpu_count}-node:{platform.node()}"
 
         runner = BenchmarkRunner(
                 data_dir=args.data_dir,

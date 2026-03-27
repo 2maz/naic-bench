@@ -13,7 +13,7 @@ import math
 import platform
 
 from naic_bench.package_manager import PackageManager
-from naic_bench.config import Config
+from naic_bench.settings import Config
 
 logger = logging.getLogger(__name__)
 
@@ -239,7 +239,9 @@ class BenchmarkSpec(BaseModel):
     @computed_field
     @property
     def temp_dir(self) -> Path:
-        temp_dir = Config.output_base_dir / f"{self.identifier}"
+        config = Config.initialize()
+
+        temp_dir = config.output_base_dir / f"{self.identifier}"
         temp_dir.mkdir(parents=True, exist_ok=True)
         return temp_dir
 

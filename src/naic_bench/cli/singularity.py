@@ -7,6 +7,7 @@ from logging import getLogger
 from naic_bench.cli.base import BaseParser
 from naic_bench.singularity import Singularity
 from naic_bench.utils import Command
+from naic_bench.settings import Config
 
 logger = getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -14,6 +15,8 @@ logger.setLevel(logging.INFO)
 class SingularityParser(BaseParser):
     def __init__(self, parser: ArgumentParser):
         super().__init__(parser=parser)
+
+        config = Config.initialize()
 
         parser.add_argument("--rebuild-all", action="store_true", default=False,
                 help="Rebuild both docker and then the sinularity image from the docker")
@@ -28,6 +31,12 @@ class SingularityParser(BaseParser):
         parser.add_argument("--device-type", required=False, type=str, default=None)
         parser.add_argument("--sif-image",
             help="The singularity image name, default is 'naic-bench-<device-type>.sif'",
+            required=False,
+            type=str,
+            default=None
+        )
+        parser.add_argument("--sif-image-dir",
+            help=f"The singularity image directory, default is '{config.sif.image_dir}'",
             required=False,
             type=str,
             default=None
@@ -63,6 +72,13 @@ class SingularityParser(BaseParser):
         rebuild_singularity = args.rebuild_all or args.rebuild_singularity
 
         Command.find(command="singularity", do_throw=True)
+
+        config = Config.get_instance()
+        if args.sif_image_dir:
+            config.sif.image_dir = args.sif_image_dir
+
+        print("Using singularity:")
+        print(f"    image dir: {config.sif.image_dir}")
 
         Singularity.run(
              image_name=args.sif_image,
