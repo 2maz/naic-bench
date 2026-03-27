@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 class ContainerConfig(BaseModel):
     image_dir: Path = Field(default=Path("./sif-images"))
-    workspace_dir: Path = Field(default=Path("naic-workspace"))
+    workspace_dir: Path = Field(default=Path("/naic-workspace"),
+            description="Containers folder to consider as workspace directory")
 
 class Config(BaseSettings):
     # export NAIC_BENCH_ENVFILE='.dev.env' in order to change the default
@@ -24,7 +25,8 @@ class Config(BaseSettings):
                 )
 
     output_base_dir: Path = Path(tempfile.gettempdir()) / "naic-bench"
-    sif: ContainerConfig = ContainerConfig()
+    docker: ContainerConfig = ContainerConfig(workspace_dir=Path("/naic-workspace"))
+    sif: ContainerConfig = ContainerConfig(workspace_dir=Path("/naic-workspace/writeable"))
     workspace_dir: Path = Field(
                             default="naic-workspace",
                             description="Local folder that will be mounted as workspace in the container"

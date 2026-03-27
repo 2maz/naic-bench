@@ -6,7 +6,7 @@ import subprocess
 import logging
 from logging import getLogger
 
-from naic_bench.docker import Docker, DOCKER_NAIC_WORKSPACE
+from naic_bench.docker import Docker
 from naic_bench.utils import Command, canonized_name
 from naic_bench.settings import Config
 
@@ -80,6 +80,9 @@ class Singularity:
          docker_image: str | None = None,
          build_only: bool = False
     ):
+
+        config = Config.initialize()
+
         if not device_type:
             device_type = Docker.autodetect_device_type()
 
@@ -96,8 +99,6 @@ class Singularity:
             image_name += ".sif"
 
         if not Path(image_name).is_absolute():
-            config = Config.get_instance()
-
             sif_image_dir = Path(config.sif.image_dir)
             sif_image_dir.mkdir(exist_ok=True, parents=True)
             image_name = str(sif_image_dir / image_name)
@@ -127,18 +128,13 @@ class Singularity:
             return
 
         if start:
+            config.workspace_dir.mkdir(parents=True, exist_ok=True)
             # start the container with the correct mounted volumes
             singularity_run = ["singularity", "instance", "start"]
             if data_dir:
                 singularity_run += ["-B", f"{Path(data_dir).resolve()}:/data"]
 
-            work_dir = Path(DOCKER_NAIC_WORKSPACE)
-            if work_dir.is_absolute():
-                work_dir = Path(str(work_dir)[1:])
-
-            work_dir.mkdir(parents=True, exist_ok=True)
-
-            singularity_run += ["-B", f"{str(work_dir)}:{DOCKER_NAIC_WORKSPACE}/writeable"]
+            singularity_run += ["-B", f"{Path(config.workspace_dir).resolve()}:{str(config.sif.workspace_dir)}"]
 
             if device_type.startswith("nvidia"):
                 singularity_run += [ "--nv"]
@@ -148,7 +144,7 @@ class Singularity:
             Command.run_with_progress(singularity_run)
 
         if exec_args:
-            singularity_exec = ["singularity", "exec", "--cwd", "${DOCKER_NAIC_WORKSPACE}/writeable", f"instance://{instance_name}"] + exec_args
+            singularity_exec = ["singularity", "exec", "--cwd", str(config.sif.workspace_dir), f"instance://{instance_name}"] + exec_args
             Command.run_with_progress(singularity_exec)
         else:
             print("No command provided to execute in singularity: if required append '-- <command>'")

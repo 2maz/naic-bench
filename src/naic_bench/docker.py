@@ -13,6 +13,7 @@ import sys
 
 from naic_bench.utils.command import Command
 import naic_bench.utils.gpus as gpus
+from naic_bench.settings import Config
 
 logger = getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -44,9 +45,6 @@ DOCKER_DEVICE_TYPE_ARGS = {
         "--ipc","host",
     ]
 }
-
-# Workspace as used in Dockerfile.<device-type>
-DOCKER_NAIC_WORKSPACE = "/naic-workspace"
 
 class Docker:
     def __init__(self):
@@ -268,6 +266,7 @@ class Docker:
 
             Command.run_with_progress(docker_run)
 
+        config = Config.initialize()
 
         container = docker.container(container_name)
         mounts = container.attrs["Mounts"]
@@ -284,11 +283,11 @@ class Docker:
                 [print(f"     - {x['Source']}:{x['Destination']}") for x in mounts]
             print()
 
-            docker_exec = ["docker", "exec", container_name]
+            docker_exec = ["docker", "exec", "-w", config.docker.workspace_dir, container_name]
             docker_exec += exec_args
             Command.run_with_progress(docker_exec)
         else:
             print("No command provide to execute in docker: if required append '-- <command>'")
-            docker_exec = ["docker", "exec", "-it", container_name, "bash" ]
+            docker_exec = ["docker", "exec", "-it", "-w", config.docker.workspace_dir, container_name, "bash" ]
             print(f"Entering container '{container_name}' in interactive mode (quit with CTRL-D)")
             subprocess.run(' '.join(docker_exec), shell=True)
