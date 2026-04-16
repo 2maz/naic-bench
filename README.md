@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/892612977.svg)](https://doi.org/10.5281/zenodo.19607453)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19607454-blue.svg)](https://doi.org/10.5281/zenodo.19607454)
 
 # NAIC Bench
 
