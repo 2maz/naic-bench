@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/892612977.svg)](https://doi.org/10.5281/zenodo.19607453)
+
 # NAIC Bench
 
 A package to run Deep Learning Examples for 'simple' benchmarking across
