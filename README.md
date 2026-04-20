@@ -167,7 +167,7 @@ typically the device type is only necessary when building an image for another k
 
 # License
 
-Copyright (c) 2024-2026 Thomas Roehr, Simula Research Laboratory
+Copyright (c) 2024-2026 Thomas M. Roehr, Simula Research Laboratory
 
 This project is licensed under the terms of the [New BSD License](https://opensource.org/license/BSD-3-clause).
 You are free to use, modify, and distribute this work, subject to the
